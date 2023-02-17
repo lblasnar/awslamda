@@ -3,22 +3,12 @@ package org.example.pojo.disney;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import lombok.Value;
 
-import javax.annotation.Generated;
-
-@Generated("jsonschema2pojo")
+@Value
 public class FeaturedMedia {
 
     @SerializedName("video")
     @Expose
-    private Video video;
-
-    public Video getVideo() {
-        return video;
-    }
-
-    public void setVideo(Video video) {
-        this.video = video;
-    }
-
+    Video video;
 }

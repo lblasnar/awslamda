@@ -1,9 +1,9 @@
 
 package org.example.pojo.disney;
 
-import javax.annotation.Generated;
+import lombok.Value;
 
-@Generated("jsonschema2pojo")
+@Value
 public class FeaturedTag {
 
 

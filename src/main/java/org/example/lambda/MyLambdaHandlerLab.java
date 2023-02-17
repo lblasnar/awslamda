@@ -8,6 +8,7 @@ import com.amazonaws.services.lambda.runtime.events.SNSEvent;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.example.api.APIfz;
 import org.example.api.RetroFitAPI;
 import org.example.pojo.MessageDTO;
@@ -55,7 +56,7 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         String messageToSend;
         if (!ids.isEmpty()) {
             messageToSend = "The message was: " + ids;
-        }else{
+        } else {
             messageToSend = "No ids found in the message";
         }
         return messageToSend;
@@ -81,9 +82,9 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         Response<ClassificationDTO> response;
         try {
             response = call.execute();
-            ClassificationDTO messageDTO = response.body();
+            ClassificationDTO classificationDTO = response.body();
             if (response.isSuccessful()) {
-                resendToSNS(response, messageDTO);
+                resendToSNS(response, classificationDTO);
             } else {
                 logger.log("ERROR: Something wrong with the response of Retrofit");
             }
@@ -92,11 +93,11 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         }
     }
 
-    private void resendToSNS(Response<ClassificationDTO> response, ClassificationDTO messageDTO) {
+    private void resendToSNS(Response<ClassificationDTO> response, ClassificationDTO classificationDTO) {
         AmazonSNS client = AmazonSNSClientBuilder.standard().build();
         logger.log("Disney message received successfully");
         logger.log(String.format("With message:%s", response.message()));
-        String disneyMessage = new Gson().toJson(messageDTO);
+        String disneyMessage = new GsonBuilder().setPrettyPrinting().create().toJson(classificationDTO);
         logger.log("Disney json message");
         logger.log("\n" + disneyMessage);
         client.publish("arn:aws:sns:us-east-1:350407421116:Disney", disneyMessage, "Disney message");
