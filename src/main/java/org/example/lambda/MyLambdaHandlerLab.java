@@ -77,7 +77,7 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
             response = call.execute();
             ClassificationDTO classificationDTO = response.body();
             if (response.isSuccessful()) {
-                resendToSNS(response, classificationDTO);
+//                resendToSNS(response, classificationDTO);
             } else {
                 logger.log("ERROR: Something wrong with the response of Retrofit");
             }
