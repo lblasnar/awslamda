@@ -2,7 +2,6 @@ package org.example.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.lambda.runtime.LambdaRuntime;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SNSEvent;
 import com.amazonaws.services.sns.AmazonSNS;
@@ -23,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.example.utils.LambdaUtils.initializeLogger;
+
 /**
  * @author luigi
  * 15/02/2023
@@ -32,8 +33,8 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
 
     @Override
     public String handleRequest(SNSEvent input, Context context) {
-        initializeLogger(context);
-        logger.log("Received event");
+        logger = initializeLogger(context);
+        logger.log("Received SNS event");
         logger.log(String.format("Received event at : %s", Instant.now()));
         List<SNSEvent.SNSRecord> records = input.getRecords();
         List<String> ids = new ArrayList<>();
@@ -60,14 +61,6 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
             messageToSend = "No ids found in the message";
         }
         return messageToSend;
-    }
-
-    private void initializeLogger(Context context) {
-        if (context.getLogger() != null) {
-            logger = context.getLogger();
-        } else {
-            logger = LambdaRuntime.getLogger();
-        }
     }
 
     private void sendToRetroFit(String id) {

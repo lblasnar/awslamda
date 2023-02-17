@@ -1,0 +1,74 @@
+package org.example.lambda;
+
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
+import com.amazonaws.services.lambda.runtime.events.SNSEvent;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * @author luigi
+ * 17/02/2023
+ */
+class MyJavaLambdaHandlerTest {
+
+    final SNSEvent snsEvent = mock(SNSEvent.class);
+    final SNSEvent.SNSRecord snsRecord = mock(SNSEvent.SNSRecord.class);
+    final SNSEvent.SNS sns = mock(SNSEvent.SNS.class);
+    final Context context = mock(Context.class);
+    final KinesisEvent kinesisEvent = mock(KinesisEvent.class);
+    final KinesisEvent.KinesisEventRecord kinesisEventRecord = mock(KinesisEvent.KinesisEventRecord.class);
+    final KinesisEvent.Record kinesis = mock(KinesisEvent.Record.class);
+
+    @Test
+    void happy_path_kinesis() {
+        //Given
+        given(kinesisEvent.getRecords()).willReturn(List.of(kinesisEventRecord));
+        given(kinesisEventRecord.getKinesis()).willReturn(kinesis);
+        given(kinesisEventRecord.getEventName()).willReturn("My kinesis event name");
+        mockKinesis();
+        given(context.getLogger()).willReturn(null);
+        //When
+        var myLambdaHandlerLabTest = new MyJavaLambdaHandler();
+        String handleRequest = myLambdaHandlerLabTest.handleRequest(kinesisEvent, context);
+        //Then
+        Assertions.assertEquals("Kinesis events: " + List.of("My kinesis event name"), handleRequest);
+    }
+
+    @Test
+    void happy_path_sns() {
+        //Given
+        given(snsEvent.getRecords()).willReturn(List.of(snsRecord));
+        given(snsRecord.getSNS()).willReturn(sns);
+        given(context.getLogger()).willReturn(null);
+        String json = "{\"id\":\"2662585\",\"description\":\"Test Payload\"}";
+        //When
+        when(sns.getMessage()).thenReturn(json);
+        var myLambdaHandlerLabTest = new MyLambdaHandlerLab();
+        String handleRequest = myLambdaHandlerLabTest.handleRequest(snsEvent, context);
+        //Then
+        Assertions.assertEquals("The message was: " + List.of("2662585"), handleRequest);
+    }
+
+    private void mockKinesis() {
+        given(kinesis.getKinesisSchemaVersion()).willReturn("1");
+        given(kinesis.getApproximateArrivalTimestamp()).willReturn(Date.from(Instant.now()));
+        given(kinesis.getSequenceNumber()).willReturn("456789");
+        given(kinesis.getEncryptionType()).willReturn("Test");
+        given(kinesis.getPartitionKey()).willReturn("Key");
+        byte[] bytes = new byte[10];
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        given(kinesis.getData()).willReturn(buffer);
+    }
+
+
+}
