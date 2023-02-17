@@ -18,14 +18,14 @@ import static org.mockito.Mockito.when;
  */
 class MyLambdaHandlerLabTest {
 
-    SNSEvent snsEvent = mock(SNSEvent.class);
+    final SNSEvent snsEvent = mock(SNSEvent.class);
 
-    SNSEvent.SNSRecord snsRecord = mock(SNSEvent.SNSRecord.class);
+    final SNSEvent.SNSRecord snsRecord = mock(SNSEvent.SNSRecord.class);
 
-    SNSEvent.SNS sns = mock(SNSEvent.SNS.class);
+    final SNSEvent.SNS sns = mock(SNSEvent.SNS.class);
 
     @Mock
-    Context context = mock(Context.class);
+    final Context context = mock(Context.class);
 
     @Test
     void happy_path() {

@@ -1,4 +1,3 @@
-
 package org.example.pojo.disney;
 
 import com.google.gson.annotations.Expose;
@@ -12,95 +11,95 @@ public class Data {
 
     @SerializedName("id")
     @Expose
-     Integer id;
+    Integer id;
     @SerializedName("publishedKey")
     @Expose
-     String publishedKey;
+    String publishedKey;
     @SerializedName("link")
     @Expose
-     Link link;
+    Link link;
     @SerializedName("section")
     @Expose
-     Section section;
+    Section section;
     @SerializedName("date")
     @Expose
-     Integer date;
+    Integer date;
     @SerializedName("dateModified")
     @Expose
-     Integer dateModified;
+    Integer dateModified;
     @SerializedName("firstPublished")
     @Expose
-     Integer firstPublished;
+    Integer firstPublished;
     @SerializedName("type")
     @Expose
-     String type;
+    String type;
     @SerializedName("linkText")
     @Expose
-     String linkText;
+    String linkText;
     @SerializedName("pageTitle")
     @Expose
-     String pageTitle;
+    String pageTitle;
     @SerializedName("title")
     @Expose
-     String title;
+    String title;
     @SerializedName("description")
     @Expose
-     String description;
+    String description;
     @SerializedName("calloutText")
     @Expose
-     String calloutText;
+    String calloutText;
     @SerializedName("lastPublishedDate")
     @Expose
-     Integer lastPublishedDate;
+    Integer lastPublishedDate;
     @SerializedName("deckline")
     @Expose
-     String deckline;
+    String deckline;
     @SerializedName("editorial")
     @Expose
-     Editorial editorial;
+    Editorial editorial;
     @SerializedName("bodyExist")
     @Expose
-     Boolean bodyExist;
+    Boolean bodyExist;
     @SerializedName("displayComments")
     @Expose
-     Boolean displayComments;
+    Boolean displayComments;
     @SerializedName("sponsored")
     @Expose
-     Boolean sponsored;
+    Boolean sponsored;
     @SerializedName("noSyndication")
     @Expose
-     Boolean noSyndication;
+    Boolean noSyndication;
     @SerializedName("addToSiteSearch")
     @Expose
-     Boolean addToSiteSearch;
+    Boolean addToSiteSearch;
     @SerializedName("social")
     @Expose
-     Social social;
+    Social social;
     @SerializedName("disableFeaturedMedia")
     @Expose
-     String disableFeaturedMedia;
+    String disableFeaturedMedia;
     @SerializedName("featuredMedia")
     @Expose
-     FeaturedMedia featuredMedia;
+    FeaturedMedia featuredMedia;
     @SerializedName("imageOverride")
     @Expose
-     ImageOverride imageOverride;
+    ImageOverride imageOverride;
     @SerializedName("redirect")
     @Expose
-     Object redirect;
+    Object redirect;
     @SerializedName("amp")
     @Expose
-     Boolean amp;
+    Boolean amp;
     @SerializedName("classification")
     @Expose
-     Classification__1 classification;
+    ClassificationData classification;
     @SerializedName("taxonomy")
     @Expose
-     Taxonomy__1 taxonomy;
+    TaxonomyData taxonomy;
     @SerializedName("translatedPost")
     @Expose
-     List<Object> translatedPost;
+    List<Object> translatedPost;
     @SerializedName("breakingNews")
     @Expose
-     Boolean breakingNews;
+    Boolean breakingNews;
 }

@@ -4,7 +4,7 @@ package org.example.pojo.disney;
 import lombok.Value;
 
 @Value
-public class Social__1 {
+public class SocialVideo {
 
 
 }

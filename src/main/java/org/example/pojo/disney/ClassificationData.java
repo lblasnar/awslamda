@@ -8,21 +8,18 @@ import lombok.Value;
 import java.util.List;
 
 @Value
-public class Taxonomy__1 {
+public class ClassificationData {
 
     @SerializedName("tags")
     @Expose
-    List<String> tags;
+    List<TagClassificationData> tags;
+    @SerializedName("featuredTag")
+    @Expose
+    FeaturedTagClassificationData featuredTag;
     @SerializedName("places")
     @Expose
     List<Object> places;
     @SerializedName("topic")
     @Expose
-    String topic;
-    @SerializedName("hicCategory")
-    @Expose
-    String hicCategory;
-    @SerializedName("segments")
-    @Expose
-    List<Object> segments;
+    TopicClassificationData topic;
 }

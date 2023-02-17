@@ -13,7 +13,7 @@ public class Image {
     Integer id;
     @SerializedName("link")
     @Expose
-    Link__2 link;
+    LinkImage link;
     @SerializedName("source")
     @Expose
     String source;

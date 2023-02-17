@@ -5,7 +5,6 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
-import javax.annotation.Generated;
 import java.util.List;
 
 @Value

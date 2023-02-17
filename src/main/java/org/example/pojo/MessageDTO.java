@@ -1,6 +1,5 @@
 package org.example.pojo;
 
-import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**

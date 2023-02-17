@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class Link__1 {
+public class LinkVideo {
 
     @SerializedName("url")
     @Expose

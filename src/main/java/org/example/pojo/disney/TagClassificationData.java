@@ -6,12 +6,12 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class Section__1 {
+public class TagClassificationData {
 
     @SerializedName("name")
     @Expose
     String name;
-    @SerializedName("path")
+    @SerializedName("data")
     @Expose
-    String path;
+    String data;
 }

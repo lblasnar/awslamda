@@ -6,12 +6,9 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class Tag__1 {
+public class LinkImage {
 
-    @SerializedName("name")
+    @SerializedName("api")
     @Expose
-    String name;
-    @SerializedName("data")
-    @Expose
-    String data;
+    String api;
 }

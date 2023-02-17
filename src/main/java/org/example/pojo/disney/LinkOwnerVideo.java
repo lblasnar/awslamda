@@ -6,13 +6,9 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class FeaturedTag__1 {
+public class LinkOwnerVideo {
 
-    @SerializedName("name")
+    @SerializedName("url")
     @Expose
-     String name;
-    @SerializedName("data")
-    @Expose
-     String data;
-
+    String url;
 }

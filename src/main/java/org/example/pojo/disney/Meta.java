@@ -10,5 +10,5 @@ public class Meta {
 
     @SerializedName("keywords")
     @Expose
-     String keywords;
+    String keywords;
 }

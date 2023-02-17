@@ -21,6 +21,7 @@ public class RetroFitAPI {
     }
 
     private final Retrofit retrofit;
+
     public RetroFitAPI() {
         Gson gson = new GsonBuilder().setLenient().create();
         final OkHttpClient okHttpClient = new OkHttpClient.Builder()

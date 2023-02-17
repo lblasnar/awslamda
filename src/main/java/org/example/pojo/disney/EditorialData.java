@@ -6,12 +6,12 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class Editorial__1 {
+public class EditorialData {
 
     @SerializedName("displayDate")
     @Expose
-    private Integer displayDate;
+    Integer displayDate;
     @SerializedName("hideDate")
     @Expose
-    private Boolean hideDate;
+    Boolean hideDate;
 }

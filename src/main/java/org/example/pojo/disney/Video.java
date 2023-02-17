@@ -16,10 +16,10 @@ public class Video {
     String publishedKey;
     @SerializedName("link")
     @Expose
-    Link__1 link;
+    LinkVideo link;
     @SerializedName("section")
     @Expose
-    Section__1 section;
+    SectionVideo section;
     @SerializedName("date")
     @Expose
     Integer date;
@@ -64,11 +64,10 @@ public class Video {
     Image image;
     @SerializedName("social")
     @Expose
-    Social__1 social;
+    SocialVideo social;
     @SerializedName("editorial")
     @Expose
-
-    Editorial__1 editorial;
+    EditorialData editorial;
     @SerializedName("m3u8")
     @Expose
     String m3u8;
@@ -98,5 +97,5 @@ public class Video {
     Meta meta;
     @SerializedName("owner")
     @Expose
-    Owner__1 owner;
+    OwnerVideo owner;
 }
