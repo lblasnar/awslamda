@@ -5,8 +5,6 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.example.utils.LambdaUtils.initializeLogger;
 
@@ -21,17 +19,17 @@ public class MyLambdaSQSHandlerLab {
         logger = initializeLogger(context);
         logger.log("Received Kinesis event");
         logger.log("Amount of events: " + input.getRecords().size());
-        List<SQSEvent.SQSMessage> records = input.getRecords();
-        Map<String, String> events = new HashMap<>();
+        var records = input.getRecords();
+        var events = new HashMap<>();
         records.forEach(r -> {
-            String messageId = r.getMessageId();
+            var messageId = r.getMessageId();
             logger.log("SQS Event id: " + messageId);
-            String body = r.getBody();
+            var body = r.getBody();
             logger.log("SQS Body: " + body);
             events.put(messageId, body);
         });
 
-        String messageToSend = "";
+        String messageToSend;
         if (!records.isEmpty()) {
             messageToSend = "SQS events id: " + events.keySet();
         } else {

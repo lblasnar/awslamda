@@ -6,7 +6,6 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.example.utils.LambdaUtils.initializeLogger;
 
@@ -22,8 +21,8 @@ public class MyLambdaKinesisHandlerLab implements RequestHandler<KinesisEvent, S
         logger = initializeLogger(context);
         logger.log("Received Kinesis event");
         logger.log("Amount of events: " + input.getRecords().size());
-        List<KinesisEvent.KinesisEventRecord> records = input.getRecords();
-        List<String> events = new ArrayList<>();
+        var records = input.getRecords();
+        var events = new ArrayList<>();
         records.forEach(r -> {
             String eventName = r.getEventName();
             logger.log("Event name: " + eventName);
@@ -31,7 +30,7 @@ public class MyLambdaKinesisHandlerLab implements RequestHandler<KinesisEvent, S
             events.add(eventName);
         });
 
-        String messageToSend = "";
+        String messageToSend;
         if (!records.isEmpty()) {
             messageToSend = "Kinesis events: " + events;
         } else {

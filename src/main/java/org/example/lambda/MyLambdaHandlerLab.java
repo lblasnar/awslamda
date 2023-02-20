@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SNSEvent;
-import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,7 +14,6 @@ import org.example.pojo.disney.ClassificationDTO;
 import org.joda.time.Instant;
 import retrofit2.Call;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,18 +34,18 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         logger = initializeLogger(context);
         logger.log("Received SNS event");
         logger.log(String.format("Received event at : %s", Instant.now()));
-        List<SNSEvent.SNSRecord> records = input.getRecords();
+        var records = input.getRecords();
         List<String> ids = new ArrayList<>();
         records.forEach(snsRecord -> {
             SNSEvent.SNS sns = snsRecord.getSNS();
             //From message get id
-            String snsMessage = sns.getMessage();
+            var snsMessage = sns.getMessage();
             logger.log("SNS message: " + snsMessage);
             logger.log("SNS message attributes: " + sns.getMessageAttributes());
             logger.log("SNS type: " + sns.getType());
             var message = Optional.ofNullable(new Gson().fromJson(snsMessage, MessageDTO.class));
             message.ifPresent(value -> {
-                String id = value.getId();
+                var id = value.getId();
                 ids.add(id);
                 logger.log(String.format("Id received: %s", id));
             });
@@ -67,16 +65,16 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         logger.log("Initiating retrofit");
         //Send to Retrofit
         var retroFitAPI = new RetroFitAPI();
-        Retrofit retrofit = retroFitAPI.getRetrofit();
-        APIfz apIfz = retrofit.create(APIfz.class);
-        String url = "/v3/kabc/item/" + id + "?key=otv.web.kabc.story";
+        var retrofit = retroFitAPI.getRetrofit();
+        var apIfz = retrofit.create(APIfz.class);
+        var url = "/v3/kabc/item/" + id + "?key=otv.web.kabc.story";
         logger.log("Sending Retrofit to: " + RetroFitAPI.BASE_URL + url);
         Call<ClassificationDTO> call = apIfz.getId(url);
         Response<ClassificationDTO> response;
         try {
             response = call.execute();
-            ClassificationDTO classificationDTO = response.body();
             if (response.isSuccessful()) {
+                ClassificationDTO classificationDTO = response.body();
 //                resendToSNS(response, classificationDTO);
             } else {
                 logger.log("ERROR: Something wrong with the response of Retrofit");
@@ -86,11 +84,12 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         }
     }
 
+    //TODO Resent to SNS will be ignored for now
     private void resendToSNS(Response<ClassificationDTO> response, ClassificationDTO classificationDTO) {
-        AmazonSNS client = AmazonSNSClientBuilder.standard().build();
+        var client = AmazonSNSClientBuilder.standard().build();
         logger.log("Disney message received successfully");
         logger.log(String.format("With message:%s", response.message()));
-        String disneyMessage = new GsonBuilder().setPrettyPrinting().create().toJson(classificationDTO);
+        var disneyMessage = new GsonBuilder().setPrettyPrinting().create().toJson(classificationDTO);
         logger.log("Disney json message");
         logger.log("\n" + disneyMessage);
         client.publish("arn:aws:sns:us-east-1:350407421116:Disney", disneyMessage, "Disney message");

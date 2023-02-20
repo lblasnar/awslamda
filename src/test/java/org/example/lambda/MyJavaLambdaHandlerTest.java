@@ -42,7 +42,7 @@ class MyJavaLambdaHandlerTest {
         given(context.getLogger()).willReturn(null);
         //When
         var myLambdaHandlerLabTest = new MyJavaLambdaHandler();
-        String handleRequest = myLambdaHandlerLabTest.handleRequest(kinesisEvent, context);
+        var handleRequest = myLambdaHandlerLabTest.handleRequest(kinesisEvent, context);
         //Then
         Assertions.assertEquals("Kinesis events: " + List.of("My kinesis event name"), handleRequest);
     }
@@ -56,7 +56,7 @@ class MyJavaLambdaHandlerTest {
         given(context.getLogger()).willReturn(null);
         //When
         var myLambdaHandlerLabTest = new MyJavaLambdaHandler();
-        String handleRequest = myLambdaHandlerLabTest.handleRequest(sqsEvent, context);
+        var handleRequest = myLambdaHandlerLabTest.handleRequest(sqsEvent, context);
         //Then
         Assertions.assertEquals("SQS events id: [741852]", handleRequest);
     }
@@ -67,11 +67,11 @@ class MyJavaLambdaHandlerTest {
         given(snsEvent.getRecords()).willReturn(List.of(snsRecord));
         given(snsRecord.getSNS()).willReturn(sns);
         given(context.getLogger()).willReturn(null);
-        String json = "{\"id\":\"2662585\",\"description\":\"Test Payload\"}";
+        var json = "{\"id\":\"2662585\",\"description\":\"Test Payload\"}";
         //When
         when(sns.getMessage()).thenReturn(json);
         var myLambdaHandlerLabTest = new MyLambdaHandlerLab();
-        String handleRequest = myLambdaHandlerLabTest.handleRequest(snsEvent, context);
+        var handleRequest = myLambdaHandlerLabTest.handleRequest(snsEvent, context);
         //Then
         Assertions.assertEquals("The message was: " + List.of("2662585"), handleRequest);
     }
@@ -82,8 +82,8 @@ class MyJavaLambdaHandlerTest {
         given(kinesis.getSequenceNumber()).willReturn("456789");
         given(kinesis.getEncryptionType()).willReturn("Test");
         given(kinesis.getPartitionKey()).willReturn("Key");
-        byte[] bytes = new byte[10];
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        var bytes = new byte[10];
+        var buffer = ByteBuffer.wrap(bytes);
         given(kinesis.getData()).willReturn(buffer);
     }
 }
