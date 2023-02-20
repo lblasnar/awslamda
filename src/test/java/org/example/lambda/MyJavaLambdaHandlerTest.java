@@ -3,6 +3,7 @@ package org.example.lambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
 import com.amazonaws.services.lambda.runtime.events.SNSEvent;
+import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +29,8 @@ class MyJavaLambdaHandlerTest {
     final KinesisEvent kinesisEvent = mock(KinesisEvent.class);
     final KinesisEvent.KinesisEventRecord kinesisEventRecord = mock(KinesisEvent.KinesisEventRecord.class);
     final KinesisEvent.Record kinesis = mock(KinesisEvent.Record.class);
+    final SQSEvent sqsEvent = mock(SQSEvent.class);
+    final SQSEvent.SQSMessage sqsMessage = mock(SQSEvent.SQSMessage.class);
 
     @Test
     void happy_path_kinesis() {
@@ -42,6 +45,20 @@ class MyJavaLambdaHandlerTest {
         String handleRequest = myLambdaHandlerLabTest.handleRequest(kinesisEvent, context);
         //Then
         Assertions.assertEquals("Kinesis events: " + List.of("My kinesis event name"), handleRequest);
+    }
+
+    @Test
+    void happy_path_sqs() {
+        //Given
+        given(sqsEvent.getRecords()).willReturn(List.of(sqsMessage));
+        given(sqsMessage.getBody()).willReturn("Test from sqs body");
+        given(sqsMessage.getMessageId()).willReturn("741852");
+        given(context.getLogger()).willReturn(null);
+        //When
+        var myLambdaHandlerLabTest = new MyJavaLambdaHandler();
+        String handleRequest = myLambdaHandlerLabTest.handleRequest(sqsEvent, context);
+        //Then
+        Assertions.assertEquals("SQS events id: [741852]", handleRequest);
     }
 
     @Test
@@ -69,6 +86,4 @@ class MyJavaLambdaHandlerTest {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         given(kinesis.getData()).willReturn(buffer);
     }
-
-
 }
