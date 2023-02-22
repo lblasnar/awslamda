@@ -1,7 +1,6 @@
 package org.example.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.services.lambda.runtime.events.SNSEvent;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
@@ -9,6 +8,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
 import java.io.*;
@@ -19,32 +20,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.example.utils.LambdaUtils.initializeLogger;
-
 public class HandlerStream implements RequestStreamHandler {
     final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    LambdaLogger logger;
+    private static final Logger logger = LogManager.getLogger(HandlerStream.class);
     @Getter
     final List<Object> receivedEvents = new ArrayList<>();
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
-        logger = initializeLogger(context);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
             // Unit test purpose only
-//            logger.log("EVENT inputstream: " + IOUtils.toString(inputStream));
+//            logger.info("EVENT inputstream: " + IOUtils.toString(inputStream));
             HashMap event = gson.fromJson(reader, HashMap.class);
-            logger.log("STREAM TYPE: " + inputStream.getClass().toString());
-            logger.log("EVENT TYPE: " + event.getClass().toString());
-            logger.log("EVENT: " + event);
+            logger.info("STREAM TYPE: " + inputStream.getClass().toString());
+            logger.info("EVENT TYPE: " + event.getClass().toString());
+            logger.info("EVENT: " + event);
             event.forEach((k, v) -> {
-                logger.log(k.toString());
-                logger.log("Key class" + k.getClass());
-                logger.log("Value class:" + v.getClass());
+                logger.info(k.toString());
+                logger.info("Key class" + k.getClass());
+                logger.info("Value class:" + v.getClass());
                 List<LinkedTreeMap> list = (List) v;
-                logger.log("Size list:" + list.size());
-                logger.log("Class : " + ((List<?>) v).get(0).getClass());
-                logger.log("LinkedTreeMap class ?" + list.getClass());
+                logger.info("Size list:" + list.size());
+                logger.info("Class : " + ((List<?>) v).get(0).getClass());
+                logger.info("LinkedTreeMap class ?" + list.getClass());
                 filterByEventType(receivedEvents, list);
             });
         }
@@ -53,35 +51,35 @@ public class HandlerStream implements RequestStreamHandler {
     private void filterByEventType(List<Object> receivedEvents, List<LinkedTreeMap> list) {
         //Vemos cada uno de los mensajes que vienen
         list.forEach(value -> {
-            logger.log("A value of list :" + value);
-            logger.log("Class : " + value.getClass());
+            logger.info("A value of list :" + value);
+            logger.info("Class : " + value.getClass());
             var eventSource = value.keySet().stream()
                     .filter(key -> key.toString().equalsIgnoreCase("eventsource"))
                     .findFirst();
             eventSource.ifPresent(aEvent -> {
                 var theEvent = value.get(aEvent);
-                logger.log("EventSource: " + theEvent);
-                logger.log("EventSource class: " + theEvent.getClass());
+                logger.info("EventSource: " + theEvent);
+                logger.info("EventSource class: " + theEvent.getClass());
                 String eventStr = theEvent.toString();
                 if (eventStr.contains("sns")) {
-                    logger.log("IT'S A SNS!!!");
+                    logger.info("IT'S A SNS!!!");
                     LinkedTreeMap sns = (LinkedTreeMap) value.get("Sns");
-                    logger.log("Value SNS : " + sns.toString());
-                    logger.log("Class SNS : " + sns.getClass());
-                    logger.log("Parsing to SNSEvent");
+                    logger.info("Value SNS : " + sns.toString());
+                    logger.info("Class SNS : " + sns.getClass());
+                    logger.info("Parsing to SNSEvent");
                     var snsMessage = parseSNSMessage(sns);
-                    logger.log("SNS parsed: " + snsMessage);
+                    logger.info("SNS parsed: " + snsMessage);
                     receivedEvents.add(snsMessage);
 
                 } else if (eventStr.contains("sqs")) {
-                    logger.log("IT'S A SQS!!!");
-                    logger.log("Value SQS : " + value);
-                    logger.log("Class SQS : " + value.getClass());
+                    logger.info("IT'S A SQS!!!");
+                    logger.info("Value SQS : " + value);
+                    logger.info("Class SQS : " + value.getClass());
                     var body = value.get("body");
-                    logger.log("Body from SQS: " + body);
-                    logger.log("Parsing to SQSEvent");
+                    logger.info("Body from SQS: " + body);
+                    logger.info("Parsing to SQSEvent");
                     var sqsMessage = parseSQSMessage(value, body);
-                    logger.log("SQS parsed: " + sqsMessage);
+                    logger.info("SQS parsed: " + sqsMessage);
                     receivedEvents.add(sqsMessage);
                 }
             });

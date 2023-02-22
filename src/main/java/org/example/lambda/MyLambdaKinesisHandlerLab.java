@@ -1,32 +1,30 @@
 package org.example.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-
-import static org.example.utils.LambdaUtils.initializeLogger;
 
 /**
  * @author luigi
  * 15/02/2023
  */
 public class MyLambdaKinesisHandlerLab implements RequestHandler<KinesisEvent, String> {
-    private LambdaLogger logger;
+    private static final Logger logger = LogManager.getLogger(MyLambdaKinesisHandlerLab.class);
 
     @Override
     public String handleRequest(KinesisEvent input, Context context) {
-        logger = initializeLogger(context);
-        logger.log("Received Kinesis event");
-        logger.log("Amount of events: " + input.getRecords().size());
+        logger.info("Received Kinesis event");
+        logger.info("Amount of events: " + input.getRecords().size());
         var records = input.getRecords();
         var events = new ArrayList<>();
         records.forEach(r -> {
             String eventName = r.getEventName();
-            logger.log("Event name: " + eventName);
-            logger.log("Kinesis: " + r.getKinesis().toString());
+            logger.info("Event name: " + eventName);
+            logger.info("Kinesis: " + r.getKinesis().toString());
             events.add(eventName);
         });
 
