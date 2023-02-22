@@ -17,7 +17,7 @@ public class MyLambdaSQSHandlerLab {
 
     public String handleRequest(SQSEvent input, Context context) {
         logger = initializeLogger(context);
-        logger.log("Received Kinesis event");
+        logger.log("Received SQS event");
         logger.log("Amount of events: " + input.getRecords().size());
         var records = input.getRecords();
         var events = new HashMap<>();

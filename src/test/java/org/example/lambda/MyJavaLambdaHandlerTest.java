@@ -4,17 +4,18 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.KinesisEvent;
 import com.amazonaws.services.lambda.runtime.events.SNSEvent;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-import static org.mockito.BDDMockito.given;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author luigi
@@ -33,57 +34,158 @@ class MyJavaLambdaHandlerTest {
     final SQSEvent.SQSMessage sqsMessage = mock(SQSEvent.SQSMessage.class);
 
     @Test
-    void happy_path_kinesis() {
+    void sqs_happy_path() throws IOException {
         //Given
-        given(kinesisEvent.getRecords()).willReturn(List.of(kinesisEventRecord));
-        given(kinesisEventRecord.getKinesis()).willReturn(kinesis);
-        given(kinesisEventRecord.getEventName()).willReturn("My kinesis event name");
-        mockKinesis();
-        given(context.getLogger()).willReturn(null);
+        var message = getSQSMessage();
+        var inputStream = new ByteArrayInputStream(message.getBytes());
         //When
-        var myLambdaHandlerLabTest = new MyJavaLambdaHandler();
-        var handleRequest = myLambdaHandlerLabTest.handleRequest(kinesisEvent, context);
+        var myLambdaHandlerLabTest = new HandlerStream();
         //Then
-        Assertions.assertEquals("Kinesis events: " + List.of("My kinesis event name"), handleRequest);
+        assertDoesNotThrow(() -> myLambdaHandlerLabTest.handleRequest(inputStream, new ByteArrayOutputStream(), context));
+        assertEquals(1, myLambdaHandlerLabTest.getReceivedEvents().size());
+        assertEquals(getExpectedSQS().getBody(), ((SQSEvent.SQSMessage) myLambdaHandlerLabTest.getReceivedEvents().get(0)).getBody());
+        assertEquals(SQSEvent.SQSMessage.class, myLambdaHandlerLabTest.getReceivedEvents().get(0).getClass());
     }
 
     @Test
-    void happy_path_sqs() {
+    void sns_happy_path() throws IOException {
         //Given
-        given(sqsEvent.getRecords()).willReturn(List.of(sqsMessage));
-        given(sqsMessage.getBody()).willReturn("Test from sqs body");
-        given(sqsMessage.getMessageId()).willReturn("741852");
-        given(context.getLogger()).willReturn(null);
+        var message = getSNSMessage();
+        var inputStream = new ByteArrayInputStream(message.getBytes());
         //When
-        var myLambdaHandlerLabTest = new MyJavaLambdaHandler();
-        var handleRequest = myLambdaHandlerLabTest.handleRequest(sqsEvent, context);
+        var myLambdaHandlerLabTest = new HandlerStream();
         //Then
-        Assertions.assertEquals("SQS events id: [741852]", handleRequest);
+        assertDoesNotThrow(() -> myLambdaHandlerLabTest.handleRequest(inputStream, new ByteArrayOutputStream(), context));
+        assertEquals(1, myLambdaHandlerLabTest.getReceivedEvents().size());
+        assertEquals(getExpectedSNS().getMessage(), ((SNSEvent.SNS) myLambdaHandlerLabTest.getReceivedEvents().get(0)).getMessage());
+        assertEquals(SNSEvent.SNS.class, myLambdaHandlerLabTest.getReceivedEvents().get(0).getClass());
     }
 
-    @Test
-    void happy_path_sns() {
-        //Given
-        given(snsEvent.getRecords()).willReturn(List.of(snsRecord));
-        given(snsRecord.getSNS()).willReturn(sns);
-        given(context.getLogger()).willReturn(null);
-        var json = "{\"id\":\"2662585\",\"description\":\"Test Payload\"}";
-        //When
-        when(sns.getMessage()).thenReturn(json);
-        var myLambdaHandlerLabTest = new MyLambdaHandlerLab();
-        var handleRequest = myLambdaHandlerLabTest.handleRequest(snsEvent, context);
-        //Then
-        Assertions.assertEquals("The message was: " + List.of("2662585"), handleRequest);
+    private SNSEvent.SNS getExpectedSNS() {
+        var sns = new SNSEvent.SNS();
+        sns.setMessage("{\"id\":\"2662585\",\"description\":\"Test Payload\"}");
+        return sns;
     }
 
-    private void mockKinesis() {
-        given(kinesis.getKinesisSchemaVersion()).willReturn("1");
-        given(kinesis.getApproximateArrivalTimestamp()).willReturn(Date.from(Instant.now()));
-        given(kinesis.getSequenceNumber()).willReturn("456789");
-        given(kinesis.getEncryptionType()).willReturn("Test");
-        given(kinesis.getPartitionKey()).willReturn("Key");
-        var bytes = new byte[10];
-        var buffer = ByteBuffer.wrap(bytes);
-        given(kinesis.getData()).willReturn(buffer);
+    private static SQSEvent.SQSMessage getExpectedSQS() {
+        var message = new SQSEvent.SQSMessage();
+        message.setBody("New SQS message generated with default no formatted body");
+        message.setReceiptHandle("AQEBJhnNJcTDYd/gXwirHW86bdK8CbrWF8Ck+ee0oWjSd+FggE4k/BC1CYaMBGW2/XtMxKfHxGOjkku4yEbAGUxri1BGOjxPQkkac+Qh8saALF08zzsgJ2nOtbDozIVr85hsd9ZAzN4ztljFNRYemJm5Iug0VJciIt7DiEtK0fWqQ3F3mnnxZmZAeIn7W9VJHZT9x+P7mAg2l8O48v2a7LE5DOeAv+0PDwtlPi80mJdsmpgGDocsgagmObgYY68vbgeEk5aSKmXUfspyIbpW36zLAI9DsMNvdQnhWxcTk1zMZAcohCJMKYIck2ddKjb0RBJYcfYm3FNk+ge179DHkhxjjU0QWN15i9BjcDVsIVvB9DbcsK/WWW9yt6EVHrXkLFFV");
+        message.setAttributes(Map.of("ApproximateFirstReceiveTimestamp", "1677075125936", "SentTimestamp", "1677075125917", "SenderId", "AIDAVDFPI5S6ODTSJYMUX", "ApproximateReceiveCount", "1"));
+        message.setMd5OfMessageAttributes("19448236650b116a67d4ec357db0a537");
+        message.setMessageId("76850fc3-a29f-4647-9fdf-84274052d048");
+        message.setMd5OfBody("429b460e742f9cc0531e2050a8d148ef");
+        message.setEventSource("aws:sqs");
+        message.setEventSourceArn("arn:aws:sqs:us-east-1:350407421116:MyTestQueue");
+        message.setAwsRegion("us-east-1");
+        var mA1 = new SQSEvent.MessageAttribute();
+        mA1.setDataType("String");
+        var stringValue = "c1ef6193-4059-d441-4718-c0e959e7756d";
+        mA1.setStringValue(stringValue);
+        mA1.setBinaryValue(ByteBuffer.wrap(stringValue.getBytes()));
+        mA1.setBinaryListValues(List.of());
+        mA1.setStringListValues(List.of());
+        var mA2 = new SQSEvent.MessageAttribute();
+        mA2.setDataType("String");
+        var stringValue2 = "text/plain;charset=UTF-8";
+        mA2.setStringValue(stringValue2);
+        mA2.setBinaryValue(ByteBuffer.wrap(stringValue2.getBytes()));
+        mA2.setBinaryListValues(List.of());
+        mA2.setStringListValues(List.of());
+        var mA3 = new SQSEvent.MessageAttribute();
+        mA3.setDataType("String");
+        var stringValue3 = "1677075126442";
+        mA3.setStringValue(stringValue3);
+        mA2.setBinaryValue(ByteBuffer.wrap(stringValue2.getBytes()));
+        mA2.setBinaryListValues(List.of());
+        mA2.setStringListValues(List.of());
+        message.setMessageAttributes(Map.of("timestamp", mA3, "contentType", mA2, "id", mA1));
+        return message;
+    }
+
+
+    private static String getSQSMessage() {
+        return "{\n" +
+                "    \"Records\": [\n" +
+                "        {\n" +
+                "            \"messageId\": \"76850fc3-a29f-4647-9fdf-84274052d048\",\n" +
+                "            \"receiptHandle\": \"AQEBJhnNJcTDYd/gXwirHW86bdK8CbrWF8Ck+ee0oWjSd+FggE4k/BC1CYaMBGW2/XtMxKfHxGOjkku4yEbAGUxri1BGOjxPQkkac+Qh8saALF08zzsgJ2nOtbDozIVr85hsd9ZAzN4ztljFNRYemJm5Iug0VJciIt7DiEtK0fWqQ3F3mnnxZmZAeIn7W9VJHZT9x+P7mAg2l8O48v2a7LE5DOeAv+0PDwtlPi80mJdsmpgGDocsgagmObgYY68vbgeEk5aSKmXUfspyIbpW36zLAI9DsMNvdQnhWxcTk1zMZAcohCJMKYIck2ddKjb0RBJYcfYm3FNk+ge179DHkhxjjU0QWN15i9BjcDVsIVvB9DbcsK/WWW9yt6EVHrXkLFFV\",\n" +
+                "            \"body\": \"New SQS message generated with default no formatted body\",\n" +
+                "            \"attributes\": {\n" +
+                "                \"ApproximateReceiveCount\": \"1\",\n" +
+                "                \"SentTimestamp\": \"1677075125917\",\n" +
+                "                \"SenderId\": \"AIDAVDFPI5S6ODTSJYMUX\",\n" +
+                "                \"ApproximateFirstReceiveTimestamp\": \"1677075125936\"\n" +
+                "            },\n" +
+                "            \"messageAttributes\": {\n" +
+                "                \"id\": {\n" +
+                "                    \"stringValue\": \"c1ef6193-4059-d441-4718-c0e959e7756d\",\n" +
+                "                    \"stringListValues\": [],\n" +
+                "                    \"binaryListValues\": [],\n" +
+                "                    \"dataType\": \"String\"\n" +
+                "                },\n" +
+                "                \"contentType\": {\n" +
+                "                    \"stringValue\": \"text/plain;charset=UTF-8\",\n" +
+                "                    \"stringListValues\": [],\n" +
+                "                    \"binaryListValues\": [],\n" +
+                "                    \"dataType\": \"String\"\n" +
+                "                },\n" +
+                "                \"timestamp\": {\n" +
+                "                    \"stringValue\": \"1677075126442\",\n" +
+                "                    \"stringListValues\": [],\n" +
+                "                    \"binaryListValues\": [],\n" +
+                "                    \"dataType\": \"Number.java.lang.Long\"\n" +
+                "                }\n" +
+                "            },\n" +
+                "            \"md5OfMessageAttributes\": \"19448236650b116a67d4ec357db0a537\",\n" +
+                "            \"md5OfBody\": \"429b460e742f9cc0531e2050a8d148ef\",\n" +
+                "            \"eventSource\": \"aws:sqs\",\n" +
+                "            \"eventSourceARN\": \"arn:aws:sqs:us-east-1:350407421116:MyTestQueue\",\n" +
+                "            \"awsRegion\": \"us-east-1\"\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}";
+    }
+
+    private static String getSNSMessage() {
+        return "{\n" +
+                "    \"Records\": [\n" +
+                "        {\n" +
+                "            \"EventSource\": \"aws:sns\",\n" +
+                "            \"EventVersion\": \"1.0\",\n" +
+                "            \"EventSubscriptionArn\": \"arn:aws:sns:us-east-1:350407421116:test1:a9f97e84-b3ce-4535-b7cc-d10bcaca27a8\",\n" +
+                "            \"Sns\": {\n" +
+                "                \"Type\": \"Notification\",\n" +
+                "                \"MessageId\": \"efd14834-ec6a-5fb6-8ac9-1444c91a7bb8\",\n" +
+                "                \"TopicArn\": \"arn:aws:sns:us-east-1:350407421116:test1\",\n" +
+                "                \"Subject\": \"purchase-transaction-subject\",\n" +
+                "                \"Message\": \"{\\\"id\\\":\\\"2662585\\\",\\\"description\\\":\\\"Test Payload\\\"}\",\n" +
+                "                \"Timestamp\": \"2023-02-22T14:14:08.015Z\",\n" +
+                "                \"SignatureVersion\": \"1\",\n" +
+                "                \"Signature\": \"BmYjywJSxqGfpKzwKfgmvkY/5NvisVDHgWnMPNndBluF81NMMnTGWKPi8EDs4q+owz+bPVN8n2I2V5uNK+5eZCvh0SFj1JjkUUzwxl7YXfjvCkIpPDjYLkRTRgSb6gN1BKIbtuGXoj4cZD+p81YRmUN5fGW1oqPyrHpi5kNOqMA4LZrR55bjU5SQn/f1gk/G+WDmUz5lR5R5vfBCSFPCnSdeyyzadJs8JUinmMxHXun8v/cWw68IweBJRpoasiXUqRqBsEqdSKcsujwIe83TGJFTXaO6M8YQg32NYnDKXNNR6QWtjRQu+wZiz1JbjPYuHXqnmyVIR1f57UqlFSEZLw==\",\n" +
+                "                \"SigningCertUrl\": \"https://sns.us-east-1.amazonaws.com/SimpleNotificationService-56e67fcb41f6fec09b0196692625d385.pem\",\n" +
+                "                \"UnsubscribeUrl\": \"https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:350407421116:test1:a9f97e84-b3ce-4535-b7cc-d10bcaca27a8\",\n" +
+                "                \"MessageAttributes\": {\n" +
+                "                    \"NOTIFICATION_SUBJECT_HEADER\": {\n" +
+                "                        \"Type\": \"String\",\n" +
+                "                        \"Value\": \"purchase-transaction-subject\"\n" +
+                "                    },\n" +
+                "                    \"id\": {\n" +
+                "                        \"Type\": \"String\",\n" +
+                "                        \"Value\": \"58026d1d-c266-3590-528c-4089e3440ace\"\n" +
+                "                    },\n" +
+                "                    \"contentType\": {\n" +
+                "                        \"Type\": \"String\",\n" +
+                "                        \"Value\": \"application/json\"\n" +
+                "                    },\n" +
+                "                    \"timestamp\": {\n" +
+                "                        \"Type\": \"String\",\n" +
+                "                        \"Value\": \"1677075248728\"\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}";
     }
 }
