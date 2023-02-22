@@ -22,10 +22,10 @@ import java.util.Map;
 import static org.example.utils.LambdaUtils.initializeLogger;
 
 public class HandlerStream implements RequestStreamHandler {
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     LambdaLogger logger;
     @Getter
-    List<Object> receivedEvents = new ArrayList<>();
+    final List<Object> receivedEvents = new ArrayList<>();
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
@@ -36,7 +36,7 @@ public class HandlerStream implements RequestStreamHandler {
             HashMap event = gson.fromJson(reader, HashMap.class);
             logger.log("STREAM TYPE: " + inputStream.getClass().toString());
             logger.log("EVENT TYPE: " + event.getClass().toString());
-            logger.log("EVENT: " + event.toString());
+            logger.log("EVENT: " + event);
             event.forEach((k, v) -> {
                 logger.log(k.toString());
                 logger.log("Key class" + k.getClass());
@@ -70,18 +70,18 @@ public class HandlerStream implements RequestStreamHandler {
                     logger.log("Class SNS : " + sns.getClass());
                     logger.log("Parsing to SNSEvent");
                     var snsMessage = parseSNSMessage(sns);
-                    logger.log("SNS parsed: " + snsMessage.toString());
+                    logger.log("SNS parsed: " + snsMessage);
                     receivedEvents.add(snsMessage);
 
                 } else if (eventStr.contains("sqs")) {
                     logger.log("IT'S A SQS!!!");
-                    logger.log("Value SQS : " + value.toString());
+                    logger.log("Value SQS : " + value);
                     logger.log("Class SQS : " + value.getClass());
                     var body = value.get("body");
                     logger.log("Body from SQS: " + body);
                     logger.log("Parsing to SQSEvent");
                     var sqsMessage = parseSQSMessage(value, body);
-                    logger.log("SQS parsed: " + sqsMessage.toString());
+                    logger.log("SQS parsed: " + sqsMessage);
                     receivedEvents.add(sqsMessage);
                 }
             });
@@ -106,10 +106,8 @@ public class HandlerStream implements RequestStreamHandler {
 
     private Map<String, SNSEvent.MessageAttribute> setSNSMessageAttributes(LinkedTreeMap messageAttributes) {
         var messageAttr = new HashMap<String, SNSEvent.MessageAttribute>();
-        messageAttributes.forEach((k, v) -> {
-            messageAttr.put(k.toString(), setSNSMessageAttributesValues((LinkedTreeMap) v));
-        });
-        return null;
+        messageAttributes.forEach((k, v) -> messageAttr.put(k.toString(), setSNSMessageAttributesValues((LinkedTreeMap) v)));
+        return messageAttr;
     }
 
     private SNSEvent.MessageAttribute setSNSMessageAttributesValues(LinkedTreeMap linkedTreeMap) {
@@ -151,14 +149,12 @@ public class HandlerStream implements RequestStreamHandler {
     }
 
     private void setSQSMessageAttribute(LinkedTreeMap<?, ?> aV, SQSEvent.MessageAttribute messageAttribute) {
-        List<String> stringValues = new ArrayList<>();
-        LinkedTreeMap<?, ?> aLinkedTreeMap = aV;
-        String stringValue = aLinkedTreeMap.get("stringValue").toString();
+        String stringValue = aV.get("stringValue").toString();
         messageAttribute.setStringValue(stringValue);
-        messageAttribute.setStringListValues((List<String>) aLinkedTreeMap.get("stringListValues"));
+        messageAttribute.setStringListValues((List<String>) aV.get("stringListValues"));
         messageAttribute.setBinaryValue(ByteBuffer.wrap(stringValue.getBytes()));
-        messageAttribute.setDataType(aLinkedTreeMap.get("dataType").toString());
-        messageAttribute.setBinaryListValues((List<ByteBuffer>) aLinkedTreeMap.get("binaryListValues"));
+        messageAttribute.setDataType(aV.get("dataType").toString());
+        messageAttribute.setBinaryListValues((List<ByteBuffer>) aV.get("binaryListValues"));
     }
 
     private void setSQSAttributes(LinkedTreeMap value, SQSEvent.SQSMessage sqsMessage) {

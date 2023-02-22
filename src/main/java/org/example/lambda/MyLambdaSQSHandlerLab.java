@@ -13,10 +13,8 @@ import static org.example.utils.LambdaUtils.initializeLogger;
  * 20/02/2023
  */
 public class MyLambdaSQSHandlerLab {
-    private LambdaLogger logger;
-
     public String handleRequest(SQSEvent input, Context context) {
-        logger = initializeLogger(context);
+        LambdaLogger logger = initializeLogger(context);
         logger.log("Received SQS event");
         logger.log("Amount of events: " + input.getRecords().size());
         var records = input.getRecords();

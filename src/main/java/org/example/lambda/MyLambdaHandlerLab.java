@@ -84,7 +84,7 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         }
     }
 
-    //TODO Resent to SNS will be ignored for now
+    //Resent to SNS will be ignored for now
     private void resendToSNS(Response<ClassificationDTO> response, ClassificationDTO classificationDTO) {
         var client = AmazonSNSClientBuilder.standard().build();
         logger.log("Disney message received successfully");

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,7 @@ class MyJavaLambdaHandlerTest {
     final SQSEvent.SQSMessage sqsMessage = mock(SQSEvent.SQSMessage.class);
 
     @Test
-    void sqs_happy_path() throws IOException {
+    void sqs_happy_path() {
         //Given
         var message = getSQSMessage();
         var inputStream = new ByteArrayInputStream(message.getBytes());
@@ -48,7 +47,7 @@ class MyJavaLambdaHandlerTest {
     }
 
     @Test
-    void sns_happy_path() throws IOException {
+    void sns_happy_path() {
         //Given
         var message = getSNSMessage();
         var inputStream = new ByteArrayInputStream(message.getBytes());
