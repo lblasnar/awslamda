@@ -10,7 +10,12 @@ import com.google.gson.internal.LinkedTreeMap;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.example.api.APIfz;
+import org.example.api.RetroFitAPI;
+import org.example.pojo.disney.ClassificationDTO;
 import org.joda.time.DateTime;
+import retrofit2.Call;
+import retrofit2.Response;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -26,23 +31,24 @@ public class HandlerStream implements RequestStreamHandler {
     @Getter
     final List<Object> receivedEvents = new ArrayList<>();
 
+    private Integer aInteger = 0;
+
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
+        aInteger++;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
-            // Unit test purpose only
-//            logger.info("EVENT inputstream: " + IOUtils.toString(inputStream));
+            logger.info("aInteger value: {}", aInteger);
             HashMap event = gson.fromJson(reader, HashMap.class);
-            logger.info("STREAM TYPE: " + inputStream.getClass().toString());
-            logger.info("EVENT TYPE: " + event.getClass().toString());
-            logger.info("EVENT: " + event);
+            logger.info("STREAM TYPE: {}", inputStream.getClass());
+            logger.info("EVENT TYPE: {}", event.getClass());
+            logger.info("EVENT: {}", event);
             event.forEach((k, v) -> {
                 logger.info(k.toString());
-                logger.info("Key class" + k.getClass());
-                logger.info("Value class:" + v.getClass());
+                logger.info("Key class {}", k.getClass());
+                logger.info("Value class: {}", v.getClass());
                 List<LinkedTreeMap> list = (List) v;
-                logger.info("Size list:" + list.size());
-                logger.info("Class : " + ((List<?>) v).get(0).getClass());
-                logger.info("LinkedTreeMap class ?" + list.getClass());
+                logger.info("Size list: {}", list.size());
+                logger.info("Class : {}", ((List<?>) v).get(0).getClass());
                 filterByEventType(receivedEvents, list);
             });
         }
@@ -51,35 +57,36 @@ public class HandlerStream implements RequestStreamHandler {
     private void filterByEventType(List<Object> receivedEvents, List<LinkedTreeMap> list) {
         //Vemos cada uno de los mensajes que vienen
         list.forEach(value -> {
-            logger.info("A value of list :" + value);
-            logger.info("Class : " + value.getClass());
+            logger.info("A value of list : {}", value);
+            logger.info("Class : {}", value.getClass());
             var eventSource = value.keySet().stream()
                     .filter(key -> key.toString().equalsIgnoreCase("eventsource"))
                     .findFirst();
             eventSource.ifPresent(aEvent -> {
                 var theEvent = value.get(aEvent);
-                logger.info("EventSource: " + theEvent);
-                logger.info("EventSource class: " + theEvent.getClass());
+                logger.info("EventSource: {}", theEvent);
+                logger.info("EventSource class: {}", theEvent.getClass());
                 String eventStr = theEvent.toString();
                 if (eventStr.contains("sns")) {
                     logger.info("IT'S A SNS!!!");
                     LinkedTreeMap sns = (LinkedTreeMap) value.get("Sns");
-                    logger.info("Value SNS : " + sns.toString());
-                    logger.info("Class SNS : " + sns.getClass());
+                    logger.info("Value SNS : {}", sns);
+                    logger.info("Class SNS : {}", sns.getClass());
                     logger.info("Parsing to SNSEvent");
                     var snsMessage = parseSNSMessage(sns);
-                    logger.info("SNS parsed: " + snsMessage);
+                    sendToRetroFit(snsMessage.getMessageId());
+                    logger.info("SNS parsed: {}", snsMessage);
                     receivedEvents.add(snsMessage);
 
                 } else if (eventStr.contains("sqs")) {
                     logger.info("IT'S A SQS!!!");
-                    logger.info("Value SQS : " + value);
-                    logger.info("Class SQS : " + value.getClass());
+                    logger.info("Value SQS : {}", value);
+                    logger.info("Class SQS : {}", value.getClass());
                     var body = value.get("body");
-                    logger.info("Body from SQS: " + body);
+                    logger.info("Body from SQS: {}", body);
                     logger.info("Parsing to SQSEvent");
                     var sqsMessage = parseSQSMessage(value, body);
-                    logger.info("SQS parsed: " + sqsMessage);
+                    logger.info("SQS parsed: {}", sqsMessage);
                     receivedEvents.add(sqsMessage);
                 }
             });
@@ -160,5 +167,29 @@ public class HandlerStream implements RequestStreamHandler {
         Map<String, String> sqsAttributes = new HashMap<>();
         attributes.forEach((aK, aV) -> sqsAttributes.put((String) aK, (String) aV));
         sqsMessage.setAttributes(sqsAttributes);
+    }
+
+    private void sendToRetroFit(String id) {
+        logger.info("Initiating retrofit");
+        //Send to Retrofit
+        var retroFitAPI = new RetroFitAPI();
+        var retrofit = retroFitAPI.getRetrofit();
+        var apIfz = retrofit.create(APIfz.class);
+        var url = "/v3/kabc/item/" + id + "?key=otv.web.kabc.story";
+        String requestUrl = RetroFitAPI.BASE_URL + url;
+        logger.info("Sending Retrofit to: {}", requestUrl);
+        Call<ClassificationDTO> call = apIfz.getId(url);
+        Response<ClassificationDTO> response;
+        try {
+            response = call.execute();
+            if (response.isSuccessful()) {
+                logger.info("Received response from Retrofit");
+                logger.info("Response: {}", response.body());
+            } else {
+                logger.info("ERROR: Something wrong with the response of Retrofit");
+            }
+        } catch (IOException e) {
+            logger.error(String.format("ERROR: %s", e.getMessage()));
+        }
     }
 }
