@@ -6,14 +6,11 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class Link {
+public class LinkVideo {
 
     @SerializedName("url")
     @Expose
     String url;
-    @SerializedName("shortURL")
-    @Expose
-    String shortURL;
     @SerializedName("canonical")
     @Expose
     String canonical;

@@ -8,18 +8,18 @@ import lombok.Value;
 import java.util.List;
 
 @Value
-public class Classification {
+public class ClassificationData {
 
     @SerializedName("tags")
     @Expose
-    List<Tag> tags;
+    List<TagClassificationData> tags;
     @SerializedName("featuredTag")
     @Expose
-    FeaturedTag featuredTag;
+    FeaturedTagClassificationData featuredTag;
     @SerializedName("places")
     @Expose
     List<Object> places;
     @SerializedName("topic")
     @Expose
-    Topic topic;
+    TopicClassificationData topic;
 }

@@ -1,13 +1,13 @@
 package org.example.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.lambda.runtime.LambdaRuntime;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SNSEvent;
-import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.example.api.APIfz;
 import org.example.api.RetroFitAPI;
 import org.example.pojo.MessageDTO;
@@ -15,7 +15,6 @@ import org.example.pojo.disney.ClassificationDTO;
 import org.joda.time.Instant;
 import retrofit2.Call;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,27 +26,26 @@ import java.util.Optional;
  * 15/02/2023
  */
 public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
-    private LambdaLogger logger;
+    private static final Logger logger = LogManager.getLogger(MyLambdaHandlerLab.class);
 
     @Override
     public String handleRequest(SNSEvent input, Context context) {
-        initializeLogger(context);
-        logger.log("Received event");
-        logger.log(String.format("Received event at : %s", Instant.now()));
-        List<SNSEvent.SNSRecord> records = input.getRecords();
+        logger.info("Received SNS event");
+        logger.info(String.format("Received event at : %s", Instant.now()));
+        var records = input.getRecords();
         List<String> ids = new ArrayList<>();
         records.forEach(snsRecord -> {
             SNSEvent.SNS sns = snsRecord.getSNS();
             //From message get id
-            String snsMessage = sns.getMessage();
-            logger.log("SNS message: " + snsMessage);
-            logger.log("SNS message attributes: " + sns.getMessageAttributes());
-            logger.log("SNS type: " + sns.getType());
+            var snsMessage = sns.getMessage();
+            logger.info("SNS message: " + snsMessage);
+            logger.info("SNS message attributes: " + sns.getMessageAttributes());
+            logger.info("SNS type: " + sns.getType());
             var message = Optional.ofNullable(new Gson().fromJson(snsMessage, MessageDTO.class));
             message.ifPresent(value -> {
-                String id = value.getId();
+                var id = value.getId();
                 ids.add(id);
-                logger.log(String.format("Id received: %s", id));
+                logger.info(String.format("Id received: %s", id));
             });
         });
         ids.forEach(this::sendToRetroFit);
@@ -55,50 +53,43 @@ public class MyLambdaHandlerLab implements RequestHandler<SNSEvent, String> {
         String messageToSend;
         if (!ids.isEmpty()) {
             messageToSend = "The message was: " + ids;
-        }else{
+        } else {
             messageToSend = "No ids found in the message";
         }
         return messageToSend;
     }
 
-    private void initializeLogger(Context context) {
-        if (context.getLogger() != null) {
-            logger = context.getLogger();
-        } else {
-            logger = LambdaRuntime.getLogger();
-        }
-    }
-
     private void sendToRetroFit(String id) {
-        logger.log("Initiating retrofit");
+        logger.info("Initiating retrofit");
         //Send to Retrofit
         var retroFitAPI = new RetroFitAPI();
-        Retrofit retrofit = retroFitAPI.getRetrofit();
-        APIfz apIfz = retrofit.create(APIfz.class);
-        String url = "/v3/kabc/item/" + id + "?key=otv.web.kabc.story";
-        logger.log("Sending Retrofit to: " + RetroFitAPI.BASE_URL + url);
+        var retrofit = retroFitAPI.getRetrofit();
+        var apIfz = retrofit.create(APIfz.class);
+        var url = "/v3/kabc/item/" + id + "?key=otv.web.kabc.story";
+        logger.info("Sending Retrofit to: " + RetroFitAPI.BASE_URL + url);
         Call<ClassificationDTO> call = apIfz.getId(url);
         Response<ClassificationDTO> response;
         try {
             response = call.execute();
-            ClassificationDTO messageDTO = response.body();
             if (response.isSuccessful()) {
-                resendToSNS(response, messageDTO);
+                ClassificationDTO classificationDTO = response.body();
+//                resendToSNS(response, classificationDTO);
             } else {
-                logger.log("ERROR: Something wrong with the response of Retrofit");
+                logger.info("ERROR: Something wrong with the response of Retrofit");
             }
         } catch (IOException e) {
-            logger.log(String.format("ERROR: %s", e.getMessage()));
+            logger.info(String.format("ERROR: %s", e.getMessage()));
         }
     }
 
-    private void resendToSNS(Response<ClassificationDTO> response, ClassificationDTO messageDTO) {
-        AmazonSNS client = AmazonSNSClientBuilder.standard().build();
-        logger.log("Disney message received successfully");
-        logger.log(String.format("With message:%s", response.message()));
-        String disneyMessage = new Gson().toJson(messageDTO);
-        logger.log("Disney json message");
-        logger.log("\n" + disneyMessage);
+    //Resent to SNS will be ignored for now
+    private void resendToSNS(Response<ClassificationDTO> response, ClassificationDTO classificationDTO) {
+        var client = AmazonSNSClientBuilder.standard().build();
+        logger.info("Disney message received successfully");
+        logger.info(String.format("With message:%s", response.message()));
+        var disneyMessage = new GsonBuilder().setPrettyPrinting().create().toJson(classificationDTO);
+        logger.info("Disney json message");
+        logger.info("\n" + disneyMessage);
         client.publish("arn:aws:sns:us-east-1:350407421116:Disney", disneyMessage, "Disney message");
         client.shutdown();
     }

@@ -21,12 +21,14 @@ public class RetroFitAPI {
     }
 
     private final Retrofit retrofit;
+
     public RetroFitAPI() {
         Gson gson = new GsonBuilder().setLenient().create();
+        // Due to 2 * 99p lambda availability
         final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(500, TimeUnit.MILLISECONDS)
+                .writeTimeout(500, TimeUnit.MILLISECONDS)
+                .readTimeout(500, TimeUnit.MILLISECONDS)
                 .build();
         retrofit = new Retrofit.Builder().client(okHttpClient).baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson)).build();

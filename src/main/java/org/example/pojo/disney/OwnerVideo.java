@@ -6,9 +6,12 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 
 @Value
-public class Topic {
+public class OwnerVideo {
 
-    @SerializedName("name")
+    @SerializedName("source")
     @Expose
-    String name;
+    String source;
+    @SerializedName("link")
+    @Expose
+    LinkOwnerVideo link;
 }
