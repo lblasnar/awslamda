@@ -10,6 +10,7 @@ import com.amazonaws.xray.entities.Segment;
 import com.amazonaws.xray.strategy.sampling.DefaultSamplingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.internal.LinkedTreeMap;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +44,6 @@ public class HandlerStream implements RequestStreamHandler {
         initializeAWSXRay();
         try (var segment = AWSXRay.beginSegment("### My Lambda")) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
-                segment.putAnnotation("Status", "Initializing");
                 logger.info("aInteger value: {}", aInteger);
                 HashMap event = gson.fromJson(reader, HashMap.class);
                 logger.info("STREAM TYPE: {}", inputStream.getClass());
@@ -60,9 +60,14 @@ public class HandlerStream implements RequestStreamHandler {
                     logger.info("Size list: {}", list.size());
                     logger.info("Class : {}", ((List<?>) v).get(0).getClass());
                     filterByEventType(receivedEvents, list);
+                    segment.putAnnotation("Events Received", receivedEvents.size());
+                    long snsCount = receivedEvents.stream().filter(e -> e instanceof SNSEvent.SNS).count();
+                    segment.putMetadata("SNS events", snsCount);
+                    long sqsCount = receivedEvents.stream().filter(e -> e instanceof SQSEvent.SQSMessage).count();
+                    segment.putMetadata("SNS events", sqsCount);
                 });
+                segment.putAnnotation("Status", "Completed");
             }
-            segment.putAnnotation("Status", "Finished");
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -114,17 +119,18 @@ public class HandlerStream implements RequestStreamHandler {
 
     private SNSEvent.SNS parseSNSMessage(LinkedTreeMap snsRaw) {
         SNSEvent.SNS sns;
-        try (Segment subsegment = AWSXRay.getCurrentSegment()) {
+        try (Segment segment = AWSXRay.getCurrentSegment()) {
             sns = new SNSEvent.SNS();
             var message = snsRaw.get("Message").toString();
             sns.setMessage(message);
-            subsegment.putAnnotation("Message", message);
+            JsonObject messageJson = new Gson().fromJson(message, JsonObject.class);
+            segment.putAnnotation("Inner message id", messageJson.get("id").toString());
             var messageId = snsRaw.get("MessageId").toString();
             sns.setMessageId(messageId);
-            subsegment.putAnnotation("Id", messageId);
+            segment.putAnnotation("Event id", messageId);
             var signature = snsRaw.get("Signature").toString();
             sns.setSignature(signature);
-            subsegment.putMetadata("Signature", signature);
+            segment.putMetadata("Signature", signature);
             sns.setSubject(snsRaw.get("Subject").toString());
             sns.setType(snsRaw.get("Type").toString());
             sns.setSignatureVersion(snsRaw.get("SignatureVersion").toString());
@@ -159,12 +165,12 @@ public class HandlerStream implements RequestStreamHandler {
     private SQSEvent.SQSMessage parseSQSMessage(LinkedTreeMap value, Object body) {
         SQSEvent.SQSMessage sqsMessage;
         String messageId;
-        try (Segment subsegment = AWSXRay.getCurrentSegment()) {
+        try (Segment segment = AWSXRay.getCurrentSegment()) {
             sqsMessage = new SQSEvent.SQSMessage();
             sqsMessage.setBody(body.toString());
-            subsegment.putAnnotation("Body", body.toString());
+            segment.putMetadata("Body", body.toString());
             messageId = value.get("messageId").toString();
-            subsegment.putAnnotation("ID", messageId);
+            segment.putAnnotation("Event Id", messageId);
             sqsMessage.setMessageId(messageId);
             sqsMessage.setAwsRegion(value.get("awsRegion").toString());
             sqsMessage.setEventSourceArn(value.get("eventSourceARN").toString());
