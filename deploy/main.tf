@@ -21,7 +21,7 @@ provider "aws" {
 
 # SQS
 resource "aws_sqs_queue" "my_terraform_sqs_queue" {
-  name                      = "my_terraform_sqs_queue_${var.env}"
+  name = "my_terraform_sqs_queue"
   # (Optional) The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0
   # to 900 (15 minutes). The default for this attribute is 0 seconds.
   delay_seconds             = 90
@@ -54,7 +54,7 @@ resource "aws_sqs_queue" "my_terraform_sqs_queue" {
 
 #SNS
 resource "aws_sns_topic" "my_terraform_sns_topic" {
-  name = "my_terraform_sns_${var.env}"
+  name = "my_terraform_sns"
   tags = {
     Environment = var.env
   }
@@ -88,10 +88,13 @@ resource "aws_lambda_function" "my_lambda_function" {
   # If the file is not in the current working directory you will need to include a
   # path.module in the filename.
   filename      = "../target/LambdaTest-1.0-SNAPSHOT.jar"
-  function_name = "my_lambda_function_${var.env}"
+  function_name = "my_lambda_function"
   role          = aws_iam_role.my_aws_role.arn
-  handler       = "index.test"
+  handler       = "org.example.lambda.HandlerStream"
   runtime       = "java11"
+  timeout       = 5
+  memory_size   = 1024
+
   environment {
     variables = {
       QA   = "qa.api.abcotvs.com"
@@ -262,4 +265,9 @@ resource "aws_sns_topic_subscription" "event_subscription" {
   endpoint  = aws_lambda_function.my_lambda_function.arn
   protocol  = "lambda"
   topic_arn = aws_sns_topic.my_terraform_sns_topic.arn
+}
+# CloudWatch group
+resource "aws_cloudwatch_log_group" "example" {
+  name              = "/aws/lambda/${aws_lambda_function.my_lambda_function.function_name}"
+  retention_in_days = 14
 }
