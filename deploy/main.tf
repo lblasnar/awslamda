@@ -95,6 +95,9 @@ resource "aws_lambda_function" "my_lambda_function" {
   timeout       = 5
   memory_size   = 1024
 
+  tracing_config {
+    mode = "Active"
+  }
   environment {
     variables = {
       QA   = "qa.api.abcotvs.com"
@@ -267,7 +270,7 @@ resource "aws_sns_topic_subscription" "event_subscription" {
   topic_arn = aws_sns_topic.my_terraform_sns_topic.arn
 }
 # CloudWatch group
-resource "aws_cloudwatch_log_group" "example" {
+resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.my_lambda_function.function_name}"
   retention_in_days = 14
 }
