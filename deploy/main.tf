@@ -8,20 +8,18 @@ terraform {
   required_version = ">= 1.2.0"
 }
 
-# terraform apply -var="env=The_Value"
-variable "env" {
-  description = "Environment to deploy"
-  type        = string
-  default     = "QA"
-}
-
 provider "aws" {
   region = "us-east-1"
 }
 
+##################################################################################################
+#
+# PROD
+#
+#################################################################################################
 # SQS
-resource "aws_sqs_queue" "my_terraform_sqs_queue" {
-  name = "my_terraform_sqs_queue"
+resource "aws_sqs_queue" "my_terraform_sqs_queue_prod" {
+  name                      = "api.abcotvs.com"
   # (Optional) The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0
   # to 900 (15 minutes). The default for this attribute is 0 seconds.
   delay_seconds             = 90
@@ -48,20 +46,20 @@ resource "aws_sqs_queue" "my_terraform_sqs_queue" {
   #  })
 
   tags = {
-    Environment = var.env
+    Environment = "Prod"
   }
 }
 
 #SNS
-resource "aws_sns_topic" "my_terraform_sns_topic" {
-  name = "my_terraform_sns"
+resource "aws_sns_topic" "my_terraform_sns_topic_prod" {
+  name = "api.abcotvs.com"
   tags = {
-    Environment = var.env
+    Environment = "Prod"
   }
 }
 
 resource "aws_sns_topic_policy" "my_sns_policy" {
-  arn    = aws_sns_topic.my_terraform_sns_topic.arn
+  arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
   policy = data.aws_iam_policy_document.sns_topic_policy.json
 }
 
@@ -77,7 +75,7 @@ data "aws_iam_policy_document" "sns_topic_policy" {
       identifiers = ["*"]
     }
     resources = [
-      aws_sns_topic.my_terraform_sns_topic.arn,
+      aws_sns_topic.my_terraform_sns_topic_prod.arn,
     ]
   }
 }
@@ -98,15 +96,6 @@ resource "aws_lambda_function" "my_lambda_function" {
   tracing_config {
     mode = "Active"
   }
-  environment {
-    variables = {
-      QA   = "qa.api.abcotvs.com"
-      Prod = "api.abcotvs.com"
-    }
-  }
-  tags = {
-    Environment = var.env
-  }
 }
 resource "aws_iam_role" "my_aws_role" {
   name               = "LambdaRole"
@@ -125,7 +114,7 @@ resource "aws_iam_role" "my_aws_role" {
   }
   EOF
   tags               = {
-    Environment = var.env
+    Environment = "Prod"
   }
 }
 
@@ -152,7 +141,7 @@ resource "aws_lambda_permission" "allow_invocation_from_sns" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.my_lambda_function.function_name
   principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.my_terraform_sns_topic.arn
+  source_arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
 }
 
 resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
@@ -256,21 +245,93 @@ resource "aws_iam_role_policy" "lambda_role_xray_policy" {
 EOF
 }
 
-# Event source from SQS
+# Event source from SQS Prod
 resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs" {
-  event_source_arn = aws_sqs_queue.my_terraform_sqs_queue.arn
+  event_source_arn = aws_sqs_queue.my_terraform_sqs_queue_prod.arn
   enabled          = true
-  function_name    = aws_lambda_function.my_lambda_function.arn
+  function_name    = aws_lambda_alias.lambda_prod.arn
   batch_size       = 1
 }
 # Event source from SNS
 resource "aws_sns_topic_subscription" "event_subscription" {
-  endpoint  = aws_lambda_function.my_lambda_function.arn
+  endpoint  = aws_lambda_alias.lambda_prod.arn
   protocol  = "lambda"
-  topic_arn = aws_sns_topic.my_terraform_sns_topic.arn
+  topic_arn = aws_sns_topic.my_terraform_sns_topic_prod.arn
 }
+
 # CloudWatch group
 resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group" {
-  name              = "/aws/lambda/${aws_lambda_function.my_lambda_function.function_name}"
+  name              = "/aws/lambda/${aws_lambda_alias.lambda_prod.name}"
+  retention_in_days = 14
+}
+
+resource "aws_lambda_alias" "lambda_prod" {
+  name             = "Prod"
+  description      = "Prod Environment"
+  function_name    = aws_lambda_function.my_lambda_function.arn
+  function_version = "1"
+
+  routing_config {
+    additional_version_weights = {
+      "2" = 0.5
+    }
+  }
+}
+
+##################################################################################################
+#
+# QA
+#
+#################################################################################################
+# SQS
+resource "aws_sqs_queue" "my_terraform_sqs_queue_qa" {
+  name                      = "qa.api.abcotvs.com"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  tags = {
+    Environment = "QA"
+  }
+}
+
+#SNS
+resource "aws_sns_topic" "my_terraform_sns_topic_qa" {
+  name = "qa.api.abcotvs.com"
+  tags = {
+    Environment = "QA"
+  }
+}
+
+resource "aws_lambda_alias" "lambda_qa" {
+  name             = "QA"
+  description      = "QA Environment"
+  function_name    = aws_lambda_function.my_lambda_function.arn
+  function_version = "1"
+
+  routing_config {
+    additional_version_weights = {
+      "2" = 0.5
+    }
+  }
+}
+
+# Event source from SQS Prod
+resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs" {
+  event_source_arn = aws_sqs_queue.my_terraform_sqs_queue_qa.arn
+  enabled          = true
+  function_name    = aws_lambda_alias.lambda_qa.arn
+  batch_size       = 1
+}
+# Event source from SNS
+resource "aws_sns_topic_subscription" "event_subscription" {
+  endpoint  = aws_lambda_alias.lambda_qa.arn
+  protocol  = "lambda"
+  topic_arn = aws_sns_topic.my_terraform_sns_topic_qa.arn
+}
+
+# CloudWatch group
+resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group" {
+  name              = "/aws/lambda/${aws_lambda_alias.lambda_qa.name}"
   retention_in_days = 14
 }
