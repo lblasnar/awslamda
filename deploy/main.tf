@@ -19,7 +19,7 @@ provider "aws" {
 #################################################################################################
 # SQS
 resource "aws_sqs_queue" "my_terraform_sqs_queue_prod" {
-  name                      = "api.abcotvs.com"
+  name                      = "api_abcotvs_com"
   # (Optional) The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0
   # to 900 (15 minutes). The default for this attribute is 0 seconds.
   delay_seconds             = 90
@@ -52,7 +52,7 @@ resource "aws_sqs_queue" "my_terraform_sqs_queue_prod" {
 
 #SNS
 resource "aws_sns_topic" "my_terraform_sns_topic_prod" {
-  name = "api.abcotvs.com"
+  name = "api_abcotvs_com"
   tags = {
     Environment = "Prod"
   }
@@ -246,21 +246,21 @@ EOF
 }
 
 # Event source from SQS Prod
-resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs" {
+resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs_pro" {
   event_source_arn = aws_sqs_queue.my_terraform_sqs_queue_prod.arn
   enabled          = true
   function_name    = aws_lambda_alias.lambda_prod.arn
   batch_size       = 1
 }
 # Event source from SNS
-resource "aws_sns_topic_subscription" "event_subscription" {
+resource "aws_sns_topic_subscription" "event_subscription_prod" {
   endpoint  = aws_lambda_alias.lambda_prod.arn
   protocol  = "lambda"
   topic_arn = aws_sns_topic.my_terraform_sns_topic_prod.arn
 }
 
 # CloudWatch group
-resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group" {
+resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_prod" {
   name              = "/aws/lambda/${aws_lambda_alias.lambda_prod.name}"
   retention_in_days = 14
 }
@@ -285,7 +285,7 @@ resource "aws_lambda_alias" "lambda_prod" {
 #################################################################################################
 # SQS
 resource "aws_sqs_queue" "my_terraform_sqs_queue_qa" {
-  name                      = "qa.api.abcotvs.com"
+  name                      = "qa_api_abcotvs_com"
   delay_seconds             = 90
   max_message_size          = 2048
   message_retention_seconds = 86400
@@ -297,7 +297,7 @@ resource "aws_sqs_queue" "my_terraform_sqs_queue_qa" {
 
 #SNS
 resource "aws_sns_topic" "my_terraform_sns_topic_qa" {
-  name = "qa.api.abcotvs.com"
+  name = "qa_api_abcotvs_com"
   tags = {
     Environment = "QA"
   }
@@ -317,21 +317,21 @@ resource "aws_lambda_alias" "lambda_qa" {
 }
 
 # Event source from SQS Prod
-resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs" {
+resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs_qa" {
   event_source_arn = aws_sqs_queue.my_terraform_sqs_queue_qa.arn
   enabled          = true
   function_name    = aws_lambda_alias.lambda_qa.arn
   batch_size       = 1
 }
 # Event source from SNS
-resource "aws_sns_topic_subscription" "event_subscription" {
+resource "aws_sns_topic_subscription" "event_subscription_qa" {
   endpoint  = aws_lambda_alias.lambda_qa.arn
   protocol  = "lambda"
   topic_arn = aws_sns_topic.my_terraform_sns_topic_qa.arn
 }
 
 # CloudWatch group
-resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group" {
+resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_qa" {
   name              = "/aws/lambda/${aws_lambda_alias.lambda_qa.name}"
   retention_in_days = 14
 }
