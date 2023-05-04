@@ -80,6 +80,28 @@ data "aws_iam_policy_document" "sns_topic_policy" {
   }
 }
 
+resource "aws_sns_topic_policy" "my_sns_policy_qa" {
+  arn    = aws_sns_topic.my_terraform_sns_topic_qa.arn
+  policy = data.aws_iam_policy_document.sns_topic_policy_qa.json
+}
+
+data "aws_iam_policy_document" "sns_topic_policy_qa" {
+  statement {
+    actions = [
+      "SNS:Subscribe",
+      "SNS:Receive"
+    ]
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    resources = [
+      aws_sns_topic.my_terraform_sns_topic_prod.arn,
+    ]
+  }
+}
+
 
 # Lambda
 resource "aws_lambda_function" "my_lambda_function" {
@@ -92,6 +114,7 @@ resource "aws_lambda_function" "my_lambda_function" {
   runtime       = "java11"
   timeout       = 5
   memory_size   = 1024
+  publish       = true
 
   tracing_config {
     mode = "Active"
@@ -135,13 +158,6 @@ resource "aws_iam_role_policy" "lambda_role_sqs_policy" {
     ]
 }
   EOF
-}
-resource "aws_lambda_permission" "allow_invocation_from_sns" {
-  statement_id  = "AllowExecutionFromSNS"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.my_lambda_function.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
 }
 
 resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
@@ -259,6 +275,14 @@ resource "aws_sns_topic_subscription" "event_subscription_prod" {
   topic_arn = aws_sns_topic.my_terraform_sns_topic_prod.arn
 }
 
+resource "aws_lambda_permission" "allow_invocation_from_sns_prod" {
+  statement_id  = "AllowExecutionFromSNSPR"
+  action        = "lambda:*"
+  function_name = aws_lambda_alias.lambda_prod.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
+}
+
 # CloudWatch group
 resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_prod" {
   name              = "/aws/lambda/${aws_lambda_alias.lambda_prod.name}"
@@ -268,14 +292,8 @@ resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_prod" {
 resource "aws_lambda_alias" "lambda_prod" {
   name             = "Prod"
   description      = "Prod Environment"
-  function_name    = aws_lambda_function.my_lambda_function.arn
-  function_version = "1"
-
-  routing_config {
-    additional_version_weights = {
-      "2" = 0.5
-    }
-  }
+  function_name    = aws_lambda_function.my_lambda_function.function_name
+  function_version = "2"
 }
 
 ##################################################################################################
@@ -307,13 +325,7 @@ resource "aws_lambda_alias" "lambda_qa" {
   name             = "QA"
   description      = "QA Environment"
   function_name    = aws_lambda_function.my_lambda_function.arn
-  function_version = "1"
-
-  routing_config {
-    additional_version_weights = {
-      "2" = 0.5
-    }
-  }
+  function_version = "2"
 }
 
 # Event source from SQS Prod
@@ -329,6 +341,14 @@ resource "aws_sns_topic_subscription" "event_subscription_qa" {
   protocol  = "lambda"
   topic_arn = aws_sns_topic.my_terraform_sns_topic_qa.arn
 }
+resource "aws_lambda_permission" "allow_invocation_from_sns_qa" {
+  statement_id  = "AllowExecutionFromSNSQA"
+  action        = "lambda:*"
+  function_name = aws_lambda_alias.lambda_qa.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.my_terraform_sns_topic_qa.arn
+}
+
 
 # CloudWatch group
 resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_qa" {
