@@ -108,7 +108,7 @@ resource "aws_lambda_function" "my_lambda_function" {
   # If the file is not in the current working directory you will need to include a
   # path.module in the filename.
   filename      = "../target/LambdaTest-1.0-SNAPSHOT.jar"
-  function_name = "my_lambda_function"
+  function_name = "Lab_lambda_function"
   role          = aws_iam_role.my_aws_role.arn
   handler       = "org.example.lambda.HandlerStream"
   runtime       = "java11"
@@ -278,22 +278,17 @@ resource "aws_sns_topic_subscription" "event_subscription_prod" {
 resource "aws_lambda_permission" "allow_invocation_from_sns_prod" {
   statement_id  = "AllowExecutionFromSNSPR"
   action        = "lambda:*"
-  function_name = aws_lambda_alias.lambda_prod.function_name
+  function_name = aws_lambda_function.my_lambda_function.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
-}
-
-# CloudWatch group
-resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_prod" {
-  name              = "/aws/lambda/${aws_lambda_alias.lambda_prod.name}"
-  retention_in_days = 14
+  qualifier     = aws_lambda_alias.lambda_prod.name
 }
 
 resource "aws_lambda_alias" "lambda_prod" {
   name             = "Prod"
   description      = "Prod Environment"
   function_name    = aws_lambda_function.my_lambda_function.function_name
-  function_version = "2"
+  function_version = "4"
 }
 
 ##################################################################################################
@@ -308,7 +303,7 @@ resource "aws_sqs_queue" "my_terraform_sqs_queue_qa" {
   max_message_size          = 2048
   message_retention_seconds = 86400
   receive_wait_time_seconds = 10
-  tags = {
+  tags                      = {
     Environment = "QA"
   }
 }
@@ -325,7 +320,7 @@ resource "aws_lambda_alias" "lambda_qa" {
   name             = "QA"
   description      = "QA Environment"
   function_name    = aws_lambda_function.my_lambda_function.arn
-  function_version = "2"
+  function_version = "4"
 }
 
 # Event source from SQS Prod
@@ -344,14 +339,8 @@ resource "aws_sns_topic_subscription" "event_subscription_qa" {
 resource "aws_lambda_permission" "allow_invocation_from_sns_qa" {
   statement_id  = "AllowExecutionFromSNSQA"
   action        = "lambda:*"
-  function_name = aws_lambda_alias.lambda_qa.function_name
+  function_name = aws_lambda_function.my_lambda_function.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.my_terraform_sns_topic_qa.arn
-}
-
-
-# CloudWatch group
-resource "aws_cloudwatch_log_group" "my_cloudwatch_log_group_qa" {
-  name              = "/aws/lambda/${aws_lambda_alias.lambda_qa.name}"
-  retention_in_days = 14
+  qualifier     = aws_lambda_alias.lambda_qa.name
 }

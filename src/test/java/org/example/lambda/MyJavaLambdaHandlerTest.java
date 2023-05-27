@@ -187,4 +187,11 @@ class MyJavaLambdaHandlerTest {
                 "    ]\n" +
                 "}";
     }
+
+    @Test
+    void testSubstring() {
+        var testString = "arn:aws:lambda:us-east-1:350407421116:function:Lab_lambda_function_1:QA";
+        var env = testString.trim().substring(testString.lastIndexOf(":") + 1);
+        assertEquals("QA", env);
+    }
 }
