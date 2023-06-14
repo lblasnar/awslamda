@@ -12,55 +12,40 @@ provider "aws" {
   region = "us-east-1"
 }
 
-##################################################################################################
-#
-# PROD
-#
 #################################################################################################
 # SQS
-resource "aws_sqs_queue" "my_terraform_sqs_queue_prod" {
-  name                      = "api_abcotvs_com"
-  # (Optional) The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0
-  # to 900 (15 minutes). The default for this attribute is 0 seconds.
-  delay_seconds             = 90
-  # (Optional) The limit of how many bytes a message can contain before Amazon SQS rejects it. An integer from 1024
-  #  bytes (1 KiB) up to 262144 bytes (256 KiB). The default for this attribute is 262144 (256 KiB).
-  max_message_size          = 2048
-  # (Optional) The number of seconds Amazon SQS retains a message. Integer representing seconds, from 60 (1 minute) to
-  # 1209600 (14 days). The default for this attribute is 345600 (4 days).
-  message_retention_seconds = 86400
-  # (Optional) The time for which a ReceiveMessage call will wait for a message to arrive (long polling) before
-  #  returning. An integer from 0 to 20 (seconds). The default for this attribute is 0, meaning that the call will
-  #  return immediately.
-  receive_wait_time_seconds = 10
-  # (Optional) The JSON policy to set up the Dead Letter Queue, see AWS docs. Note: when specifying maxReceiveCount,
-  # you must specify it as an integer (5), and not a string ("5").
-  ############################################################
-  # FOR NOW ONLY TO KNOW THAT EXIST
-  ############################################################
-  #  redrive_policy            = jsonencode({
-  #    deadLetterTargetArn = aws_sqs_queue.terraform_queue_deadletter.arn
-  #    # The maxReceiveCount is the number of times a consumer tries receiving a message from a queue without deleting it
-  #    # before being moved to the dead-letter queue.
-  #    maxReceiveCount = 4
-  #  })
+resource "aws_sqs_queue" "my_terraform_sqs_queue" {
+  name                      = var.sqs_name
+  delay_seconds             = var.sqs_delay
+  max_message_size          = var.sqs_max_message_size
+  message_retention_seconds = var.sqs_message_retention_seconds
+  receive_wait_time_seconds = var.sqs_receive_wait_time_seconds
 
   tags = {
-    Environment = "Prod"
+    Environment = var.environment
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
 #SNS
-resource "aws_sns_topic" "my_terraform_sns_topic_prod" {
-  name = "api_abcotvs_com"
+resource "aws_sns_topic" "my_terraform_sns_topic" {
+  name = var.sns_name
   tags = {
-    Environment = "Prod"
+    Environment = var.environment
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
 resource "aws_sns_topic_policy" "my_sns_policy" {
-  arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
+  arn    = aws_sns_topic.my_terraform_sns_topic.arn
   policy = data.aws_iam_policy_document.sns_topic_policy.json
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 data "aws_iam_policy_document" "sns_topic_policy" {
@@ -75,49 +60,27 @@ data "aws_iam_policy_document" "sns_topic_policy" {
       identifiers = ["*"]
     }
     resources = [
-      aws_sns_topic.my_terraform_sns_topic_prod.arn,
+      aws_sns_topic.my_terraform_sns_topic.arn,
     ]
   }
 }
-
-resource "aws_sns_topic_policy" "my_sns_policy_qa" {
-  arn    = aws_sns_topic.my_terraform_sns_topic_qa.arn
-  policy = data.aws_iam_policy_document.sns_topic_policy_qa.json
-}
-
-data "aws_iam_policy_document" "sns_topic_policy_qa" {
-  statement {
-    actions = [
-      "SNS:Subscribe",
-      "SNS:Receive"
-    ]
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-    resources = [
-      aws_sns_topic.my_terraform_sns_topic_prod.arn,
-    ]
-  }
-}
-
 
 # Lambda
 resource "aws_lambda_function" "my_lambda_function" {
-  # If the file is not in the current working directory you will need to include a
-  # path.module in the filename.
-  filename      = "../target/LambdaTest-1.0-SNAPSHOT.jar"
-  function_name = "Lab_lambda_function"
+  filename      = var.lambda_filename
+  function_name = var.lambda_function_name
   role          = aws_iam_role.my_aws_role.arn
-  handler       = "org.example.lambda.HandlerStream"
-  runtime       = "java11"
+  handler       = var.lambda_handler
+  runtime       = var.lambda_runtime
   timeout       = 5
   memory_size   = 1024
   publish       = true
 
   tracing_config {
     mode = "Active"
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 resource "aws_iam_role" "my_aws_role" {
@@ -137,7 +100,10 @@ resource "aws_iam_role" "my_aws_role" {
   }
   EOF
   tags               = {
-    Environment = "Prod"
+    Environment = var.environment
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -158,6 +124,9 @@ resource "aws_iam_role_policy" "lambda_role_sqs_policy" {
     ]
 }
   EOF
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
@@ -201,6 +170,9 @@ resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
       ]
   }
   EOF
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_logs_policy" {
@@ -220,7 +192,11 @@ resource "aws_iam_role_policy" "lambda_role_logs_policy" {
     ]
   }
   EOF
+  lifecycle {
+    prevent_destroy = true
+  }
 }
+
 resource "aws_iam_role_policy" "lambda_role_sns_policy" {
   name   = "AllowSNSPermissions"
   role   = aws_iam_role.my_aws_role.id
@@ -238,6 +214,9 @@ resource "aws_iam_role_policy" "lambda_role_sns_policy" {
     ]
   }
 EOF
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_xray_policy" {
@@ -259,88 +238,49 @@ resource "aws_iam_role_policy" "lambda_role_xray_policy" {
     ]
   }
 EOF
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-# Event source from SQS Prod
-resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs_pro" {
-  event_source_arn = aws_sqs_queue.my_terraform_sqs_queue_prod.arn
-  enabled          = true
-  function_name    = aws_lambda_alias.lambda_prod.arn
+# Event source from SQS
+resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs" {
+  event_source_arn = aws_sqs_queue.my_terraform_sqs_queue.arn
+  enabled          = var.lambda_event_source_mapping_enabled
+  function_name    = aws_lambda_alias.lambda_alias.arn
   batch_size       = 1
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 # Event source from SNS
-resource "aws_sns_topic_subscription" "event_subscription_prod" {
-  endpoint  = aws_lambda_alias.lambda_prod.arn
-  protocol  = "lambda"
-  topic_arn = aws_sns_topic.my_terraform_sns_topic_prod.arn
+resource "aws_sns_topic_subscription" "event_subscription" {
+  endpoint  = aws_lambda_alias.lambda_alias.arn
+  protocol  = var.sns_protocol
+  topic_arn = aws_sns_topic.my_terraform_sns_topic.arn
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-resource "aws_lambda_permission" "allow_invocation_from_sns_prod" {
-  statement_id  = "AllowExecutionFromSNSPR"
-  action        = "lambda:*"
+resource "aws_lambda_permission" "allow_invocation_from_sns" {
+  statement_id  = var.lambda_allow_invocation_from_sns_statement_id
+  action        = var.lambda_allow_invocation_from_sns_action
   function_name = aws_lambda_function.my_lambda_function.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.my_terraform_sns_topic_prod.arn
-  qualifier     = aws_lambda_alias.lambda_prod.name
+  principal     = var.lambda_allow_invocation_from_sns_principal
+  source_arn    = aws_sns_topic.my_terraform_sns_topic.arn
+  qualifier     = aws_lambda_alias.lambda_alias.name
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-resource "aws_lambda_alias" "lambda_prod" {
-  name             = "Prod"
-  description      = "Prod Environment"
+resource "aws_lambda_alias" "lambda_alias" {
+  name             = var.lambda_alias_name
+  description      = var.lambda_alias_description
   function_name    = aws_lambda_function.my_lambda_function.function_name
-  function_version = "4"
-}
-
-##################################################################################################
-#
-# QA
-#
-#################################################################################################
-# SQS
-resource "aws_sqs_queue" "my_terraform_sqs_queue_qa" {
-  name                      = "qa_api_abcotvs_com"
-  delay_seconds             = 90
-  max_message_size          = 2048
-  message_retention_seconds = 86400
-  receive_wait_time_seconds = 10
-  tags                      = {
-    Environment = "QA"
+  function_version = var.lambda_alias_version
+  lifecycle {
+    prevent_destroy = true
   }
-}
-
-#SNS
-resource "aws_sns_topic" "my_terraform_sns_topic_qa" {
-  name = "qa_api_abcotvs_com"
-  tags = {
-    Environment = "QA"
-  }
-}
-
-resource "aws_lambda_alias" "lambda_qa" {
-  name             = "QA"
-  description      = "QA Environment"
-  function_name    = aws_lambda_function.my_lambda_function.arn
-  function_version = "4"
-}
-
-# Event source from SQS Prod
-resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs_qa" {
-  event_source_arn = aws_sqs_queue.my_terraform_sqs_queue_qa.arn
-  enabled          = true
-  function_name    = aws_lambda_alias.lambda_qa.arn
-  batch_size       = 1
-}
-# Event source from SNS
-resource "aws_sns_topic_subscription" "event_subscription_qa" {
-  endpoint  = aws_lambda_alias.lambda_qa.arn
-  protocol  = "lambda"
-  topic_arn = aws_sns_topic.my_terraform_sns_topic_qa.arn
-}
-resource "aws_lambda_permission" "allow_invocation_from_sns_qa" {
-  statement_id  = "AllowExecutionFromSNSQA"
-  action        = "lambda:*"
-  function_name = aws_lambda_function.my_lambda_function.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.my_terraform_sns_topic_qa.arn
-  qualifier     = aws_lambda_alias.lambda_qa.name
 }

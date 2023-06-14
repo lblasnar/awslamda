@@ -28,9 +28,9 @@ public class RetroFitAPI {
         Gson gson = new GsonBuilder().setLenient().create();
         // Due to 2 * 99p lambda availability
         final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(500, TimeUnit.MILLISECONDS)
-                .writeTimeout(500, TimeUnit.MILLISECONDS)
-                .readTimeout(500, TimeUnit.MILLISECONDS)
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
                 .build();
         retrofit = new Retrofit.Builder().client(okHttpClient).baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson)).build();
@@ -38,9 +38,7 @@ public class RetroFitAPI {
 
     public static String getBaseUrl(String invokedFunctionArn) {
         var baseUrl = BASE_URL;
-        if (invokedFunctionArn.equals("Prod")) {
-            baseUrl = "https://api.abcotvs.com";
-        } else if (invokedFunctionArn.equals("QA")) {
+        if (invokedFunctionArn.equals("QA")) {
             baseUrl = "https://qa.api.abcotvs.com";
         }
         logger.info("Sending retrofit to {}", baseUrl);
