@@ -63,9 +63,9 @@ resource "aws_lambda_function" "lambda_function" {
   role          = aws_iam_role.my_aws_role.arn
   handler       = var.lambda_handler
   runtime       = var.lambda_runtime
-  timeout       = 5
-  memory_size   = 1024
-  publish       = true
+  timeout       = var.lambda_timeout
+  memory_size   = var.lambda_memory_size
+  publish       = var.lambda_publish
 
   tracing_config {
     mode = "Active"
