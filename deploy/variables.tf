@@ -17,6 +17,12 @@ variable "sqs_name" {
   default     = "SQS"
 }
 
+variable "lambda_role_name" {
+  type        = string
+  description = "The lambda role name"
+  default     = "LambdaRole"
+}
+
 variable "sqs_delay" {
   type        = number
   description = "The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0 to 900 (15 minutes). The default for this attribute is 0 seconds."

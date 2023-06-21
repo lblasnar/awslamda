@@ -24,9 +24,6 @@ resource "aws_sqs_queue" "my_terraform_sqs_queue" {
   tags = {
     Environment = var.environment
   }
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 #SNS
@@ -35,17 +32,11 @@ resource "aws_sns_topic" "my_terraform_sns_topic" {
   tags = {
     Environment = var.environment
   }
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_sns_topic_policy" "my_sns_policy" {
   arn    = aws_sns_topic.my_terraform_sns_topic.arn
   policy = data.aws_iam_policy_document.sns_topic_policy.json
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 data "aws_iam_policy_document" "sns_topic_policy" {
@@ -66,7 +57,7 @@ data "aws_iam_policy_document" "sns_topic_policy" {
 }
 
 # Lambda
-resource "aws_lambda_function" "my_lambda_function" {
+resource "aws_lambda_function" "lambda_function" {
   filename      = var.lambda_filename
   function_name = var.lambda_function_name
   role          = aws_iam_role.my_aws_role.arn
@@ -79,12 +70,9 @@ resource "aws_lambda_function" "my_lambda_function" {
   tracing_config {
     mode = "Active"
   }
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 resource "aws_iam_role" "my_aws_role" {
-  name               = "LambdaRole"
+  name               = var.lambda_role_name
   assume_role_policy = <<EOF
   {
     "Version": "2012-10-17",
@@ -101,9 +89,6 @@ resource "aws_iam_role" "my_aws_role" {
   EOF
   tags               = {
     Environment = var.environment
-  }
-  lifecycle {
-    prevent_destroy = true
   }
 }
 
@@ -124,9 +109,6 @@ resource "aws_iam_role_policy" "lambda_role_sqs_policy" {
     ]
 }
   EOF
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
@@ -170,9 +152,6 @@ resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
       ]
   }
   EOF
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_logs_policy" {
@@ -192,9 +171,6 @@ resource "aws_iam_role_policy" "lambda_role_logs_policy" {
     ]
   }
   EOF
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_sns_policy" {
@@ -214,9 +190,6 @@ resource "aws_iam_role_policy" "lambda_role_sns_policy" {
     ]
   }
 EOF
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_iam_role_policy" "lambda_role_xray_policy" {
@@ -238,9 +211,6 @@ resource "aws_iam_role_policy" "lambda_role_xray_policy" {
     ]
   }
 EOF
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 # Event source from SQS
@@ -249,38 +219,26 @@ resource "aws_lambda_event_source_mapping" "event_source_mapping_sqs" {
   enabled          = var.lambda_event_source_mapping_enabled
   function_name    = aws_lambda_alias.lambda_alias.arn
   batch_size       = 1
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 # Event source from SNS
 resource "aws_sns_topic_subscription" "event_subscription" {
   endpoint  = aws_lambda_alias.lambda_alias.arn
   protocol  = var.sns_protocol
   topic_arn = aws_sns_topic.my_terraform_sns_topic.arn
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_lambda_permission" "allow_invocation_from_sns" {
   statement_id  = var.lambda_allow_invocation_from_sns_statement_id
   action        = var.lambda_allow_invocation_from_sns_action
-  function_name = aws_lambda_function.my_lambda_function.function_name
+  function_name = aws_lambda_function.lambda_function.function_name
   principal     = var.lambda_allow_invocation_from_sns_principal
   source_arn    = aws_sns_topic.my_terraform_sns_topic.arn
   qualifier     = aws_lambda_alias.lambda_alias.name
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_lambda_alias" "lambda_alias" {
   name             = var.lambda_alias_name
   description      = var.lambda_alias_description
-  function_name    = aws_lambda_function.my_lambda_function.function_name
+  function_name    = aws_lambda_function.lambda_function.function_name
   function_version = var.lambda_alias_version
-  lifecycle {
-    prevent_destroy = true
-  }
 }
