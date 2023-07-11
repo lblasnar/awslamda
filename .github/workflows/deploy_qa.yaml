@@ -2,7 +2,7 @@ name: Deploy in QA
 on:
   pull_request:
     branches: 
-      - develpop
+      - develop
     types: [closed]
 
 jobs:
