@@ -2,3 +2,9 @@
 /target/
 /.idea/
 /log/
+/terraform/
+/deploy/.terraform/
+/deploy/.terraform.lock.hcl
+/deploy/terraform.tfstate
+/deploy/terraform.tfstate.backup
+/deploy/terraform.tfstate.d/
