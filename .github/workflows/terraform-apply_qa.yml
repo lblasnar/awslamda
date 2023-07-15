@@ -50,7 +50,7 @@ jobs:
           TF_VAR_lambda_memory_size: 1024
           TF_VAR_lambda_timeout: 20
           TF_VAR_lambda_publish: true
-          TF_VAR_lambda_alias_name: "\"QA"
+          TF_VAR_lambda_alias_name: "\"QA\""
           TF_VAR_lambda_alias_description: "\"QA Environment\""
           TF_VAR_lambda_alias_version: 2
           TF_VAR_lambda_event_source_mapping_enabled: true
