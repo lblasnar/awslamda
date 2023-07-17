@@ -1,4 +1,4 @@
-name: "Terraform Plan"
+name: "Terraform Plan Develop - QA"
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ env:
 jobs:
   terraform:
     if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
-    name: "Terraform Plan"
+    name: "Terraform Plan QA"
     runs-on: ubuntu-latest
     permissions:
       contents: read

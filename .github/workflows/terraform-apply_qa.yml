@@ -1,11 +1,7 @@
-name: "Terraform Apply"
+name: "Terraform Apply Develop - QA"
 
-#on:
-  #push:
-  #  branches:
-  #    - develop
 on:
-  pull_request:
+  push:
     branches:
       - develop
 
@@ -18,7 +14,7 @@ env:
 jobs:
   terraform:
     if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
-    name: "Terraform Apply"
+    name: "Terraform Apply QA"
     runs-on: ubuntu-latest
     permissions:
       contents: read
