@@ -32,11 +32,12 @@ jobs:
       - name: Verify jar created
         run: | 
           FILE=../target/LambdaTest-1.0-SNAPSHOT.jar
-          if test -f "$FILE"; then
-          echo "$FILE exists."
-          fi
+          if test -f "$FILE"; 
+          then
+            echo "$FILE exists."
           else
-          echo "$FILE not exists."
+            echo "$FILE not exists."
+          fi
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
         id: plan-upload
