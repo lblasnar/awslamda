@@ -71,7 +71,7 @@ jobs:
           TF_VAR_lambda_publish: true
           TF_VAR_lambda_alias_name: "\"Prod\""
           TF_VAR_lambda_alias_description: "\"Prod Environment\""
-          TF_VAR_lambda_alias_version: 3
+          TF_VAR_lambda_alias_version: 4
           TF_VAR_lambda_event_source_mapping_enabled: true
           TF_VAR_lambda_allow_invocation_from_sns_statement_id: "\"AllowExecutionFromSNSPR\""
           TF_VAR_lambda_allow_invocation_from_sns_action: "\"lambda:*\""
