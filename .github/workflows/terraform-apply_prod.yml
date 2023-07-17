@@ -1,7 +1,7 @@
 name: "Terraform Apply Main - Prod"
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
