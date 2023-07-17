@@ -2,7 +2,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 4.67"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
     }
   }
   required_version = ">= 1.2.0"
@@ -11,7 +15,11 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
-
+data "archive_file" "source_code" {
+  type        = "zip"
+  source_file = var.lambda_filename
+  output_path = "lambda_function.zip"
+}
 #################################################################################################
 # SQS
 resource "aws_sqs_queue" "my_terraform_sqs_queue" {
@@ -58,14 +66,15 @@ data "aws_iam_policy_document" "sns_topic_policy" {
 
 # Lambda
 resource "aws_lambda_function" "lambda_function" {
-  filename      = var.lambda_filename
-  function_name = var.lambda_function_name
-  role          = aws_iam_role.my_aws_role.arn
-  handler       = var.lambda_handler
-  runtime       = var.lambda_runtime
-  timeout       = var.lambda_timeout
-  memory_size   = var.lambda_memory_size
-  publish       = var.lambda_publish
+  filename         = var.lambda_filename
+  function_name    = var.lambda_function_name
+  role             = aws_iam_role.my_aws_role.arn
+  handler          = var.lambda_handler
+  runtime          = var.lambda_runtime
+  timeout          = var.lambda_timeout
+  memory_size      = var.lambda_memory_size
+  source_code_hash = data.archive_file.source_code.output_base64sha256
+  publish          = var.lambda_publish
 
   tracing_config {
     mode = "Active"
