@@ -1,9 +1,9 @@
-name: "Terraform Apply Develop - QA"
+name: "Terraform Apply Main - Prod"
 
 on:
-  push:
+  pull_request:
     branches:
-      - develop
+      - main
 
 env:
   TF_CLOUD_ORGANIZATION: "lblasnar"
@@ -14,7 +14,7 @@ env:
 jobs:
   terraform:
     if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
-    name: "Terraform Apply QA"
+    name: "Terraform Apply Prod"
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -29,7 +29,7 @@ jobs:
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots verify
       - name: Verify jar created
-        run: | 
+        run: |
           FILE=target/LambdaTest-1.0-SNAPSHOT.jar
           if test -f "$FILE"; 
           then
@@ -53,29 +53,29 @@ jobs:
           configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
         env:
           #  https://github.com/hashicorp/tfc-workflows-github/issues/10
-          TF_VAR_environment: "\"QA\""
-          TF_VAR_sqs_name: "\"SQS_QA\""
+          TF_VAR_environment: "\"Prod\""
+          TF_VAR_sqs_name: "\"SQS_Prod\""
           TF_VAR_sqs_delay: 90
           TF_VAR_sqs_max_message_size: 2048
           TF_VAR_sqs_message_retention_seconds: 86400
           TF_VAR_sqs_receive_wait_time_seconds: 10
           TF_VAR_lambda_runtime: "\"java11\""
           TF_VAR_lambda_handler: "\"org.example.lambda.HandlerStream\""
-          TF_VAR_lambda_function_name: "\"Lab_lambda_function_QA\""
+          TF_VAR_lambda_function_name: "\"Lab_lambda_function_Prod\""
           TF_VAR_lambda_filename: "\"LambdaTest-1.0-SNAPSHOT.jar\""
           TF_VAR_lambda_memory_size: 1024
           TF_VAR_lambda_timeout: 20
           TF_VAR_lambda_publish: true
-          TF_VAR_lambda_alias_name: "\"QA\""
-          TF_VAR_lambda_alias_description: "\"QA Environment\""
+          TF_VAR_lambda_alias_name: "\"Prod\""
+          TF_VAR_lambda_alias_description: "\"Prod Environment\""
           TF_VAR_lambda_alias_version: 6
           TF_VAR_lambda_event_source_mapping_enabled: true
           TF_VAR_lambda_allow_invocation_from_sns_statement_id: "\"AllowExecutionFromSNSPR\""
           TF_VAR_lambda_allow_invocation_from_sns_action: "\"lambda:*\""
           TF_VAR_lambda_allow_invocation_from_sns_principal: "\"sns.amazonaws.com\""
-          TF_VAR_lambda_role_name: "\"LambdaRole_QA\""
+          TF_VAR_lambda_role_name: "\"LambdaRole_Prod\""
           TF_VAR_sns_protocol: "\"lambda\""
-          TF_VAR_sns_name: "\"SNS_QA\""
+          TF_VAR_sns_name: "\"SNS_Prod\""
 
       - name: Apply
         uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
