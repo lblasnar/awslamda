@@ -31,12 +31,13 @@ jobs:
         run: mvn --batch-mode --update-snapshots verify
       - name: Verify jar created
         run: | 
-          FILE=target/LambdaTest-1.0-SNAPSHOT.jar
+          FILE=target/LambdaTest-1.0-SNAPSHO.jar
           if test -f "$FILE"; 
           then
             echo "$FILE exists."
           else
             echo "$FILE not exists."
+            EXIT /B 2
           fi
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
