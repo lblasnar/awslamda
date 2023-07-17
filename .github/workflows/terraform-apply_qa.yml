@@ -1,7 +1,11 @@
 name: "Terraform Apply"
 
+#on:
+  #push:
+  #  branches:
+  #    - develop
 on:
-  push:
+  pull_request:
     branches:
       - develop
 
@@ -44,7 +48,8 @@ jobs:
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           directory: ${{ env.CONFIG_DIRECTORY }}
-
+      - name: Terraform import role
+        run: terraform import aws_iam_role.my_aws_role my_aws_role
       - name: Create Apply Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
         id: apply-run
