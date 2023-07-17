@@ -38,6 +38,7 @@ jobs:
           if test -f "$FILE"; 
           then
             echo "$FILE exists."
+            cp $FILE deploy
           else
             echo "$FILE not exists."
             EXIT /B 2
