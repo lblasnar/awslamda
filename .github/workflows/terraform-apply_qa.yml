@@ -65,7 +65,7 @@ jobs:
           TF_VAR_lambda_runtime: "\"java11\""
           TF_VAR_lambda_handler: "\"org.example.lambda.HandlerStream\""
           TF_VAR_lambda_function_name: "\"Lab_lambda_function_QA\""
-          TF_VAR_lambda_filename: "\"target/LambdaTest-1.0-SNAPSHOT.jar\""
+          TF_VAR_lambda_filename: "\"../target/LambdaTest-1.0-SNAPSHOT.jar\""
           TF_VAR_lambda_memory_size: 1024
           TF_VAR_lambda_timeout: 20
           TF_VAR_lambda_publish: true
