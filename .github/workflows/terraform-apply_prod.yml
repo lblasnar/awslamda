@@ -8,7 +8,7 @@ on:
 env:
   TF_CLOUD_ORGANIZATION: "lblasnar"
   TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
-  TF_WORKSPACE: "aws-lambda-lab-gh-actions"
+  TF_WORKSPACE: "aws-lambda-lab-gh-actions-prod"
   CONFIG_DIRECTORY: "./deploy"
 
 jobs:
@@ -68,7 +68,7 @@ jobs:
           TF_VAR_lambda_publish: true
           TF_VAR_lambda_alias_name: "\"Prod\""
           TF_VAR_lambda_alias_description: "\"Prod Environment\""
-          TF_VAR_lambda_alias_version: 6
+          TF_VAR_lambda_alias_version: 3
           TF_VAR_lambda_event_source_mapping_enabled: true
           TF_VAR_lambda_allow_invocation_from_sns_statement_id: "\"AllowExecutionFromSNSPR\""
           TF_VAR_lambda_allow_invocation_from_sns_action: "\"lambda:*\""
