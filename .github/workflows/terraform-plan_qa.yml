@@ -35,6 +35,8 @@ jobs:
           if test -f "$FILE"; then
           echo "$FILE exists."
           fi
+          else
+          echo "$FILE not exists."
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
         id: plan-upload
