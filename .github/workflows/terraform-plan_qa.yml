@@ -31,7 +31,7 @@ jobs:
         run: mvn --batch-mode --update-snapshots verify
       - name: Verify jar created
         run: | 
-          FILE=../target/LambdaTest-1.0-SNAPSHOT.jar
+          FILE=../target/LambdaTest-1.0-SNAPSHOT-shaded.jar
           if test -f "$FILE"; 
           then
             echo "$FILE exists."
