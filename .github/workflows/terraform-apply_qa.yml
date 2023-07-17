@@ -49,7 +49,7 @@ jobs:
           workspace: ${{ env.TF_WORKSPACE }}
           directory: ${{ env.CONFIG_DIRECTORY }}
       - name: Terraform import role
-        run: terraform -config=deploy import aws_iam_role.my_aws_role aws_iam_role.my_aws_role.id 
+        run: terraform import -config=deploy aws_iam_role.my_aws_role aws_iam_role.my_aws_role.id 
       - name: Create Apply Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
         id: apply-run
