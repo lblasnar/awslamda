@@ -3,7 +3,7 @@ name: "Terraform Apply Develop - QA"
 on:
   pull_request:
     branches:
-      - main
+      - develop
 
 env:
   TF_CLOUD_ORGANIZATION: "lblasnar"
