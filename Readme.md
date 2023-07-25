@@ -13,4 +13,5 @@ To run terraform use:
 
 # CI/CD GH Action
 
-Make sure the version of the Alias of lambda in both environments while promoting to develop/main 
+Make sure the version of the Alias of lambda in both environments while promoting to develop/main
+Two workspaces created in [Terraform Cloud](https://app.terraform.io).
