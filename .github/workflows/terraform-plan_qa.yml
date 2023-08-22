@@ -28,7 +28,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Analyze with SonarCloud
-        run: mvn mvn --batch-mode --update-snapshots verify sonar:sonar -Dsonar.projectKey=lblasnar_awslamda -Dsonar.organization=lblasnar -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
+        run: mvn --batch-mode --update-snapshots verify sonar:sonar -Dsonar.projectKey=lblasnar_awslamda -Dsonar.organization=lblasnar -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
