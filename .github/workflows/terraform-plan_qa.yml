@@ -41,7 +41,7 @@ jobs:
             EXIT /B 2
           fi
       - name: Analyze with SonarCloud
-        run: ./mvnw -B verify sonar:sonar -Dsonar.projectKey=baralga -Dsonar.organization=awslamda -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
+        run: mvn verify sonar:sonar -Dsonar.projectKey=baralga -Dsonar.organization=awslamda -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
