@@ -45,6 +45,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'SonarClour repo here: https://sonarcloud.io/dashboard?id=lblasnar_awslamda&pullRequest=${{ PR_NUMBER }}'
+            })
+          env:
+            PR_NUMBER: ${{ github.event.number }}
+
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
         id: plan-upload
