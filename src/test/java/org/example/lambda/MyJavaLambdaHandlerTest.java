@@ -15,6 +15,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author luigi
@@ -50,6 +51,22 @@ class MyJavaLambdaHandlerTest {
     void sns_happy_path() {
         //Given
         var message = getSNSMessage();
+        var inputStream = new ByteArrayInputStream(message.getBytes());
+        when(context.getInvokedFunctionArn()).thenReturn("arn:aws:lambda:us-east-1:350407421116:function:Lab_lambda_function_QA:QA");
+        when(context.getFunctionName()).thenReturn("Lab_lambda_function_QA ");
+        //When
+        var myLambdaHandlerLabTest = new HandlerStream();
+        //Then
+        assertDoesNotThrow(() -> myLambdaHandlerLabTest.handleRequest(inputStream, new ByteArrayOutputStream(), context));
+        assertEquals(1, myLambdaHandlerLabTest.getReceivedEvents().size());
+        assertEquals(getExpectedSNS().getMessage(), ((SNSEvent.SNS) myLambdaHandlerLabTest.getReceivedEvents().get(0)).getMessage());
+        assertEquals(SNSEvent.SNS.class, myLambdaHandlerLabTest.getReceivedEvents().get(0).getClass());
+    }
+
+    @Test
+    void sns_unHappy_path() {
+        //Given
+        var message = "";
         var inputStream = new ByteArrayInputStream(message.getBytes());
         //When
         var myLambdaHandlerLabTest = new HandlerStream();

@@ -18,13 +18,13 @@ public class MyLambdaKinesisHandlerLab implements RequestHandler<KinesisEvent, S
     @Override
     public String handleRequest(KinesisEvent input, Context context) {
         logger.info("Received Kinesis event");
-        logger.info("Amount of events: " + input.getRecords().size());
+        logger.info("Amount of events: {}", input.getRecords().size());
         var records = input.getRecords();
         var events = new ArrayList<>();
         records.forEach(r -> {
             String eventName = r.getEventName();
-            logger.info("Event name: " + eventName);
-            logger.info("Kinesis: " + r.getKinesis().toString());
+            logger.info("Event name: {}", eventName);
+            logger.info("Kinesis: {}", r.getKinesis());
             events.add(eventName);
         });
 

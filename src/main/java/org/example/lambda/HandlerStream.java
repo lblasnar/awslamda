@@ -42,36 +42,24 @@ public class HandlerStream implements RequestStreamHandler {
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) {
-        // ToDo Review XRay
         this.context = context;
         aInteger++;
         initializeAWSXRay();
-//        try (var segment = AWSXRay.beginSegment("### My Lambda")) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
             logger.info("aInteger value: {}", aInteger);
             HashMap event = gson.fromJson(reader, HashMap.class);
             logger.info("STREAM TYPE: {}", inputStream.getClass());
             logger.info("EVENT TYPE: {}", event.getClass());
             logger.info("EVENT: {}", event);
-//                segment.putAnnotation("Event type", event.getClass().toString());
             event.forEach((k, v) -> {
                 logger.info(k.toString());
                 logger.info("Key class {}", k.getClass());
-//                    segment.putAnnotation("Key class", k.getClass().toString());
                 logger.info("Value class: {}", v.getClass());
-//                    segment.putAnnotation("Value class:", v.getClass().toString());
                 List<LinkedTreeMap> list = (List) v;
                 logger.info("Size list: {}", list.size());
                 logger.info("Class : {}", ((List<?>) v).get(0).getClass());
                 filterByEventType(receivedEvents, list);
-//                    segment.putAnnotation("Events Received", receivedEvents.size());
-                long snsCount = receivedEvents.stream().filter(e -> e instanceof SNSEvent.SNS).count();
-//                    segment.putMetadata("SNS events", snsCount);
-                long sqsCount = receivedEvents.stream().filter(e -> e instanceof SQSEvent.SQSMessage).count();
-//                    segment.putMetadata("SNS events", sqsCount);
             });
-//                segment.putAnnotation("Status", "Completed");
-//            }
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -125,20 +113,14 @@ public class HandlerStream implements RequestStreamHandler {
     }
 
     private SNSEvent.SNS parseSNSMessage(LinkedTreeMap snsRaw) {
-        // ToDo Review XRay
         SNSEvent.SNS sns;
-//        try (Segment segment = AWSXRay.getCurrentSegment()) {
         sns = new SNSEvent.SNS();
         var message = snsRaw.get("Message").toString();
         sns.setMessage(message);
-        JsonObject messageJson = new Gson().fromJson(message, JsonObject.class);
-//            segment.putAnnotation("Inner message id", messageJson.get("id").toString());
         var messageId = snsRaw.get("MessageId").toString();
         sns.setMessageId(messageId);
-//            segment.putAnnotation("Event id", messageId);
         var signature = snsRaw.get("Signature").toString();
         sns.setSignature(signature);
-//            segment.putMetadata("Signature", signature);
         sns.setSubject(snsRaw.get("Subject").toString());
         sns.setType(snsRaw.get("Type").toString());
         sns.setSignatureVersion(snsRaw.get("SignatureVersion").toString());
@@ -147,8 +129,6 @@ public class HandlerStream implements RequestStreamHandler {
         sns.setUnsubscribeUrl(snsRaw.get("UnsubscribeUrl").toString());
         sns.setMessageAttributes(setSNSMessageAttributes((LinkedTreeMap) snsRaw.get("MessageAttributes")));
         sns.setTimestamp(DateTime.parse(snsRaw.get("Timestamp").toString()));
-//            AWSXRay.endSubsegment();
-//        }
         return sns;
     }
 
@@ -171,15 +151,11 @@ public class HandlerStream implements RequestStreamHandler {
     }
 
     private SQSEvent.SQSMessage parseSQSMessage(LinkedTreeMap value, Object body) {
-        // ToDo Review XRay
         SQSEvent.SQSMessage sqsMessage;
         String messageId;
-//        try (Segment segment = AWSXRay.getCurrentSegment()) {
         sqsMessage = new SQSEvent.SQSMessage();
         sqsMessage.setBody(body.toString());
-//            segment.putMetadata("Body", body.toString());
         messageId = value.get("messageId").toString();
-//            segment.putAnnotation("Event Id", messageId);
         sqsMessage.setMessageId(messageId);
         sqsMessage.setAwsRegion(value.get("awsRegion").toString());
         sqsMessage.setEventSourceArn(value.get("eventSourceARN").toString());
@@ -189,8 +165,6 @@ public class HandlerStream implements RequestStreamHandler {
         sqsMessage.setReceiptHandle(value.get("receiptHandle").toString());
         setSQSAttributes(value, sqsMessage);
         setSQSMessageAttributeMap(value, sqsMessage);
-//            AWSXRay.endSubsegment();
-//        }
         return sqsMessage;
     }
 
