@@ -40,11 +40,11 @@ jobs:
             echo "$FILE not exists."
             EXIT /B 2
           fi
-      - name: Analyze with SonarCloud
-        run: mvn verify sonar:sonar -Dsonar.projectKey=lblasnar_awslamda -Dsonar.organization=lblasnar -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
+      - name: Build and analyze
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Pcoverage -Dsonar.projectKey=lblasnar_awslamda
       - uses: actions/github-script@v3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
