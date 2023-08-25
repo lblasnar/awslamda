@@ -45,6 +45,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B verify sonar:sonar -Dsonar.projectKey=lblasnar_awslamda
+      - name: Verify jacoco created
+        run: |
+          FILE=target/site/jacoco/jacoco.xml
+          if test -f "$FILE"; 
+          then
+            echo "$FILE exists."
+          else
+            echo "$FILE not exists."
+            EXIT /B 2
+          fi
       - uses: actions/github-script@v3
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
