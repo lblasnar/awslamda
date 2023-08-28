@@ -42,24 +42,10 @@ jobs:
             echo "$FILE not exists."
             EXIT /B 2
           fi
-      - name: Analyze with SonarCloud
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B clean verify sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml -Dsonar.projectKey=lblasnar_awslamda -X
-      - uses: actions/github-script@v3
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'SonarCloud report here: https://sonarcloud.io/dashboard?id=lblasnar_awslamda&pullRequest=${{env.PR_NUMBER}}'
-            })
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
         id: plan-upload
