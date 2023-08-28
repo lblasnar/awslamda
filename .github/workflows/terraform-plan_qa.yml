@@ -43,7 +43,7 @@ jobs:
             EXIT /B 2
           fi
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v1
+        uses: sonarsource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
       - name: Upload Configuration
