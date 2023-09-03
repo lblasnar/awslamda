@@ -104,6 +104,7 @@ jobs:
         with:
           run: ${{ steps.apply-run.outputs.run_id }}
           comment: "Apply Run from GitHub Actions CI ${{ github.sha }}"
+
   test_lambda:
     runs-on: ubuntu-latest
     name: "Test lambda once deploy"
@@ -115,10 +116,32 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '14'
-      - name: Test Lambda
+      - name: Configure AWS Region
         run: |
-          aws lambda invoke --function-name Lab_lambda_function_QA --payload '{}' output.txt
-          cat output.txt
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-east-1
+      - name: Test Lambda QA
+        run: |
+          echo -n '{"id":"2662585","description":"Test Payload"}' | base64 > payload.json
+          aws lambda invoke --function-name Lab_lambda_function_QA --payload file://payload.json output.json
+          cat output.json
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: true
+      - name: Check if running correctly
+        run: |
+          if jq -e '. | .StatusCode == "200"' output.json >/dev/null; then
+            echo "FOUND."
+          else  
+          echo "NOT FOUND"
+            Revert con el hash del ultimo commit
+            git revert $GITHUB_SHA" --no-edit
+            git push origin HEAD
+            git checkout develop
+            git pull origin develop
+            git push origin DEBELOP
+            hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
+          fi
+  
