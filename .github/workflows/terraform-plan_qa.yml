@@ -152,7 +152,12 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '14'
-      - name: Deploy and Test Lambda
+      - name: Configure AWS Region
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-east-1  # Reemplaza 'us-east-1' con la región que necesitas
+      - name: Test Lambda QA
         run: |
           aws lambda invoke --function-name Lab_lambda_function_QA --payload '{}' output.txt
           cat output.txt
