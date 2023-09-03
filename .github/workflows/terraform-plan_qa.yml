@@ -173,11 +173,11 @@ jobs:
           else  
           echo "Lambda not running correctly."
             # Revert con el hash del ultimo commit
-            git revert $GITHUB_SHA" --no-edit
-            git push origin HEAD
-            git checkout develop
-            git pull origin develop
-            git push origin develop
-            hub pull-request -b develop -m "Revert changes introduced by the pull request"
-            EXIT /B 2
+            # git revert $GITHUB_SHA" --no-edit
+            # git push origin HEAD
+            # git checkout develop
+            # git pull origin develop
+            # git push origin develop
+            # hub pull-request -b develop -m "Revert changes introduced by the pull request"
+            # EXIT /B 2
           fi

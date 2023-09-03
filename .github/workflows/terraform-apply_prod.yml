@@ -133,9 +133,9 @@ jobs:
       - name: Check if running correctly
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-            echo "Lambda not running correctly."
+            echo "Lambda running correctly."
           else  
-          echo "NOT FOUND"
+            echo "Lambda not running correctly."
             # Revert con el hash del ultimo commit
             git revert $GITHUB_SHA" --no-edit
             git push origin HEAD
