@@ -159,7 +159,7 @@ jobs:
           aws configure set region us-east-1
       - name: Test Lambda QA
         run: |
-          echo '{"id":"2662585","description":"Test Payload"}' > payload.json
+          echo -n '{"id":"2662585","description":"Test Payload"}' | base64 > payload.json
           aws lambda invoke --function-name Lab_lambda_function_QA --payload file://payload.json output.json
           cat output.json
         env:
@@ -168,10 +168,10 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
       - name: Check if running correctly
         run: |
-          if grep -q "\n"StatusCode\n": 200" "output.txt"; then
-            echo "FOUND"
-          else
-            echo "NOT FOUND"
+          if jq -e '. | .StatusCode == "200"' output.json >/dev/null; then
+            echo "FOUND."
+          else  
+          echo "NOT FOUND"
             # Revert con el hash del ultimo commit
             # git revert $GITHUB_SHA" --no-edit
             # git push origin HEAD
