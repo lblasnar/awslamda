@@ -156,12 +156,27 @@ jobs:
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region us-east-1  # Reemplaza 'us-east-1' con la región que necesitas
+          aws configure set region us-east-1
       - name: Test Lambda QA
         run: |
-          aws lambda invoke --function-name Lab_lambda_function_QA --payload '{}' output.txt
+          aws lambda invoke --function-name Lab_lambda_function_QA --payload '$AWS_LAMBDA_PAYLOAD' output.txt
           cat output.txt
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_EC2_METADATA_DISABLED: true
+          AWS_LAMBDA_PAYLOAD: "{EventSource=aws:sns, EventVersion=1.0, EventSubscriptionArn=arn:aws:sns:us-east-1:350407421116:SNS_QA:aafccea1-72c7-4399-b18e-541b42c47eed, Sns={Type=Notification, MessageId=f8a0434d-7f4f-57f6-8d1c-1e6216f9bf3b, TopicArn=arn:aws:sns:us-east-1:350407421116:SNS_QA, Subject=purchase-transaction-subject, Message={"id":"2662585","description":"Test Payload"}, Timestamp=2023-07-17T16:08:22.624Z, SignatureVersion=1, Signature=puuziWgy5icQuG01oX/pUDvI44VNt9A+FMzzDUYAOl88jGkUXtQEoMemb+oZumAWAZ2OoZiwHboN54HuLdi+XwpvQhYp7NL7jbuAws/CY9VWgbn6wRw8pLaUyryxBKnoxqgt+b7kSW9bXG9o466R+mBw4A8j2Tokng3fZKoikUVHiTCCM2ke7P6W1SGuFANzyk6K2RBpGlQpObWju0YhiHeRS2e51gDLXP5bgRkp07GkF5MSj1sUMWitbl1pcWv/UKPTdI5VsNgsnJviIzYnajvf1QHAgrG5N6MaDmSjutj7/Q2c4AkWF2EvGkNunu6RYUIVwpuFdSjMRAYO3TME7A==, SigningCertUrl=https://sns.us-east-1.amazonaws.com/SimpleNotificationService-01d088a6f77103d0fe307c0069e40ed6.pem, UnsubscribeUrl=https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:350407421116:SNS_QA:aafccea1-72c7-4399-b18e-541b42c47eed, MessageAttributes={NOTIFICATION_SUBJECT_HEADER={Type=String, Value=purchase-transaction-subject}, id={Type=String, Value=a26d9c4c-6d48-bc50-6363-42e288f05f4a}, contentType={Type=String, Value=application/json}, timestamp={Type=String, Value=1689610101979}}}}"
+      - name: Check if running correctly
+        run: |
+          if grep -q "\n"StatusCode\n": 200" "output.txt"; then
+            echo "FOUND"
+          else
+            echo "NOT FOUND"
+            # Revert con el hash del ultimo commit
+            # git revert $GITHUB_SHA" --no-edit
+            # git push origin HEAD
+            # git checkout develop
+            # git pull origin develop
+            # git push origin DEBELOP
+            # hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
+          fi
