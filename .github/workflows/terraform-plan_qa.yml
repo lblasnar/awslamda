@@ -159,8 +159,9 @@ jobs:
           aws configure set region us-east-1
       - name: Test Lambda QA
         run: |
-          aws lambda invoke --function-name Lab_lambda_function_QA --payload '{"id":"2662585","description":"Test Payload"}' output.txt
-          cat output.txt
+          echo '{"id":"2662585","description":"Test Payload"}' > payload.json
+          aws lambda invoke --function-name Lab_lambda_function_QA --payload file://payload.json output.json
+          cat output.json
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
