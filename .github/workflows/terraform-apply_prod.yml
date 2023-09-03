@@ -139,8 +139,8 @@ jobs:
             Revert con el hash del ultimo commit
             git revert $GITHUB_SHA" --no-edit
             git push origin HEAD
-            git checkout develop
-            git pull origin develop
-            git push origin DEBELOP
-            hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
+            git checkout main
+            git pull origin main
+            git push origin main
+            hub pull-request -b main -m "Revert changes introduced by the pull request"
           fi
