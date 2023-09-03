@@ -132,10 +132,10 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
       - name: Check if running correctly
         run: |
-          if jq -e '. | .StatusCode == "200"' output.json >/dev/null; then
-            echo "FOUND."
+          if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
+            echo "Lambda running correctly."
           else  
-          echo "NOT FOUND"
+          echo "Lambda not running correctly."
             # Revert con el hash del ultimo commit
             git revert $GITHUB_SHA" --no-edit
             git push origin HEAD
@@ -143,4 +143,5 @@ jobs:
             git pull origin develop
             git push origin develop
             hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
+            EXIT /B 2
           fi
