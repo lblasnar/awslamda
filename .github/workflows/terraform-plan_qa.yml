@@ -172,7 +172,7 @@ jobs:
             echo "FOUND."
           else  
           echo "NOT FOUND"
-            Revert con el hash del ultimo commit
+            # Revert con el hash del ultimo commit
             git revert $GITHUB_SHA" --no-edit
             git push origin HEAD
             git checkout develop
