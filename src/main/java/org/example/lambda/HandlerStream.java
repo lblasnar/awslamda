@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.api.APIfz;
 import org.example.api.RetroFitAPI;
+import org.example.exceptions.MyHandlerException;
 import org.example.pojo.disney.ClassificationDTO;
 import org.joda.time.DateTime;
 import retrofit2.Call;
@@ -62,7 +63,7 @@ public class HandlerStream implements RequestStreamHandler {
             });
         } catch (Exception e) {
             logger.error(e.getMessage());
-            throw new RuntimeException(e);
+            throw new MyHandlerException(e);
         }
     }
 
