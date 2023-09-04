@@ -62,6 +62,7 @@ public class HandlerStream implements RequestStreamHandler {
             });
         } catch (Exception e) {
             logger.error(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
