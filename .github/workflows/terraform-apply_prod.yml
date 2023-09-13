@@ -123,7 +123,7 @@ jobs:
           aws configure set region us-east-1
       - name: Test Lambda QA
         run: |
-          echo -n '{"id":"2662585","description":"Test Payload"}' | base64 > payload.json
+          echo -n '{"Records": [{"EventSource": "aws:sns","EventVersion": "1.0","EventSubscriptionArn": "arn:aws:sns:us-east-1:{{{accountId}}}:ExampleTopic","Sns": {"Type": "Notification","MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e","TopicArn": "arn:aws:sns:us-east-1:123456789012:ExampleTopic","Subject": "example subject","Message": "{\"id\":\"2662585\",\"description\":\"Test Payload\"}","Timestamp": "1970-01-01T00:00:00.000Z","SignatureVersion": "1","Signature": "EXAMPLE","SigningCertUrl": "EXAMPLE","UnsubscribeUrl": "EXAMPLE","MessageAttributes": {"Test": {"Type": "String","Value": "TestString"},"TestBinary": {"Type": "Binary","Value": "TestBinary"}}}}]}' | base64 > payload.json
           aws lambda invoke --function-name Lab_lambda_function_Prod --payload file://payload.json output.json
           cat output.json
         env:
@@ -137,11 +137,13 @@ jobs:
           else  
             echo "Lambda not running correctly."
             # Revert con el hash del ultimo commit
+            git config --global user.name "${{ github.actor }}"
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
             git revert $GITHUB_SHA --no-edit
             git push origin HEAD
-            git checkout main
-            git pull origin main
-            git push origin main
-            hub pull-request -b main -m "Revert changes introduced by the pull request"
+            git checkout develop
+            git pull origin develop
+            git push origin develop
+            hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
             EXIT /B 2
           fi

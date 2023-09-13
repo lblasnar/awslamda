@@ -137,6 +137,8 @@ jobs:
           else  
             echo "Lambda not running correctly."
             # Revert con el hash del ultimo commit
+            git config --global user.name "${{ github.actor }}"
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
             git revert $GITHUB_SHA --no-edit
             git push origin HEAD
             git checkout develop
