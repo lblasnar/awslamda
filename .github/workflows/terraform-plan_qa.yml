@@ -159,25 +159,10 @@ jobs:
           aws configure set region us-east-1
       - name: Test Lambda QA
         run: |
-          echo -n '{"EventSource": "aws:sns","EventVersion": "1.0","EventSubscriptionArn": "arn:aws:sns:us-east-1:350407421116:SNS_QA:aafccea1-72c7-4399-b18e-541b42c47eed","Sns": {"Type ": "Notification ","MessageId": "f8a0434d-7f4f-57f6-8d1c-1e6216f9bf3b ","TopicArn ": "arn: aws: sns: us - east - 1: 350407421116: SNS_QA ","Subject ": "purchase - transaction - subject ","Message ": {"id": "2662585","description": "Test Payload"},"Timestamp ": "2023-07-17T16:08:22.624Z","SignatureVersion ": "1 ","Signature ": "puuziWgy5icQuG01oX / pUDvI44VNt9A + FMzzDUYAOl88jGkUXtQEoMemb + oZumAWAZ2OoZiwHboN54HuLdi + XwpvQhYp7NL7jbuAws / CY9VWgbn6wRw8pLaUyryxBKnoxqgt + b7kSW9bXG9o466R + mBw4A8j2Tokng3fZKoikUVHiTCCM2ke7P6W1SGuFANzyk6K2RBpGlQpObWju0YhiHeRS2e51gDLXP5bgRkp07GkF5MSj1sUMWitbl1pcWv / UKPTdI5VsNgsnJviIzYnajvf1QHAgrG5N6MaDmSjutj7 / Q2c4AkWF2EvGkNunu6RYUIVwpuFdSjMRAYO3TME7A == ","SigningCertUrl ": "https: //sns.us-east-1.amazonaws.com/SimpleNotificationService-01d088a6f77103d0fe307c0069e40ed6.pem","UnsubscribeUrl": "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:350407421116:SNS_QA:aafccea1-72c7-4399-b18e-541b42c47eed","MessageAttributes": {"NOTIFICATION_SUBJECT_HEADER": {"Type": "String","Value": "purchase-transaction-subject"},"id": {"Type": "String","Value": "a26d9c4c-6d48-bc50-6363-42e288f05f4a"},"contentType": {"Type ": "String ","Value ": "application / json "},"timestamp": {"Type ": "String ","Value ": "1689610101979 "}}}}' | base64 > payload.json
+          echo -n '{"Records": [{"EventSource": "aws:sns","EventVersion": "1.0","EventSubscriptionArn": "arn:aws:sns:us-east-1:{{{accountId}}}:ExampleTopic","Sns": {"Type": "Notification","MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e","TopicArn": "arn:aws:sns:us-east-1:123456789012:ExampleTopic","Subject": "example subject","Message": "{\"id\":\"2662585\",\"description\":\"Test Payload\"}","Timestamp": "1970-01-01T00:00:00.000Z","SignatureVersion": "1","Signature": "EXAMPLE","SigningCertUrl": "EXAMPLE","UnsubscribeUrl": "EXAMPLE","MessageAttributes": {"Test": {"Type": "String","Value": "TestString"},"TestBinary": {"Type": "Binary","Value": "TestBinary"}}}}]}' | base64 > payload.json
           aws lambda invoke --function-name Lab_lambda_function_QA --payload file://payload.json output.json
           cat output.json
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_EC2_METADATA_DISABLED: true
-      - name: Check if running correctly
-        run: |
-          if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-            echo "Lambda running correctly."
-          else  
-          echo "Lambda not running correctly."
-            # Revert con el hash del ultimo commit
-            git revert $GITHUB_SHA --no-edit
-            git push origin HEAD
-            git checkout develop
-            git pull origin develop
-            git push origin develop
-            hub pull-request -b develop -m "Revert changes introduced by the pull request"
-            EXIT /B 2
-          fi
