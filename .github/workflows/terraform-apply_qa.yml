@@ -136,14 +136,8 @@ jobs:
             echo "Lambda running correctly."
           else  
             echo "Lambda not running correctly."
-            # Revert con el hash del ultimo commit
-            git config --global user.name "${{ github.actor }}"
-            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-            git revert $GITHUB_SHA --no-edit
-            git push origin HEAD
-            git checkout develop
-            git pull origin develop
-            git push origin develop
-            hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
-            EXIT /B 2
           fi
+      #- name: revert
+      #  uses: actions/revert-pull-request@v1
+      #  with:
+      #    pull-request-id: ${{ github.event.pull_request.id }}
