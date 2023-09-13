@@ -134,10 +134,16 @@ jobs:
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
             echo "Lambda running correctly."
+            echo "::set-output name=run::true"
           else  
             echo "Lambda not running correctly."
+            echo "::set-output name=run::false"
           fi
-      #- name: revert
-      #  uses: actions/revert-pull-request@v1
-      #  with:
-      #    pull-request-id: ${{ github.event.pull_request.id }}
+      - name: revert
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        uses: actions/revert-pull-request@v1
+        with:
+          pull-request-id: ${{ github.event.pull_request.id }}
+      - name: Error if fail
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        run: exit 1
