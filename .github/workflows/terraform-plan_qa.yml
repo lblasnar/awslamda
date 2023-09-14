@@ -157,7 +157,7 @@ jobs:
           echo "false"
           fi
       - name: Rolls back to a certain version
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==true
         run: |
           echo ${{ steps.Check-if-running-correctly.outputs.result }}
           echo "Working the output!!!"
