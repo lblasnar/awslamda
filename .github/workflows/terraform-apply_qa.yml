@@ -136,18 +136,16 @@ jobs:
       - name: Check if running correctly
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-            echo "Lambda running correctly."
             echo "true"
           else  
-            echo "Lambda not running correctly."
             echo "false"
           fi
-      - name: Rolls back to a certain version
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        run: |
-          git config --global user.name "lblasnar"
-          git revert  ${{ github.sha }}
-          git push
-      - name: Error if fail
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        run: exit 1
+#      - name: Rolls back to a certain version
+#        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+#        run: |
+#          git config --global user.name "lblasnar"
+#          git revert  ${{ github.sha }}
+#          git push
+#      - name: Error if fail
+#        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+#        run: exit 1
