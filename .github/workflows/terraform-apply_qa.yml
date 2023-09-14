@@ -115,7 +115,6 @@ jobs:
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.head_ref }}
-          fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -145,7 +144,7 @@ jobs:
           fi
       - uses: git-revert@v2
         with:
-          commit-hash: ${{ github.event.pull_request.merge_commit_sha }}
+          commit-hash: ${{ github.event.before }}
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
