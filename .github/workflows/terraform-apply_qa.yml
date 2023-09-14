@@ -112,6 +112,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -141,9 +144,11 @@ jobs:
           fi
       - name: revert
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        uses: actions/revert-pull-request@v1
-        with:
-          pull-request-id: ${{ github.event.pull_request.id }}
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git revert --no-edit HEAD
+          git push
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
