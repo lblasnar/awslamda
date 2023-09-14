@@ -144,9 +144,8 @@ jobs:
           fi
       - name: Get previous commit
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        uses: workflow-get-previous-commit@v1
-        with:
-          commit_sha: ${{ github.ref }}
+        run: |
+          git show --oneline ${{ github.ref }}
       - name: Rolls back to a certain version
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         uses: fivebluepetals/rollback-action@v1.0
