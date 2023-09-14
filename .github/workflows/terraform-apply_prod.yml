@@ -139,11 +139,12 @@ jobs:
             echo "pass=false" >> $GITHUB_OUTPUT 
           fi
       - name: Rolls back to a certain version
-        if: ${{ steps.check.outputs.pass }}==false
+        if: ${{ steps.check.outputs.pass == false}}
         run: |
+          echo ${{ steps.check.outputs.pass }}
           git config --global user.name "lblasnar"
           git revert  ${{ github.sha }}
           git push
       - name: Error if fail
-        if: ${{ steps.check.outputs.pass }}==false
+        if: ${{ steps.check.outputs.pass == false}}
         run: exit 1
