@@ -131,19 +131,20 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_EC2_METADATA_DISABLED: true
       - name: Check if running correctly
+        id: check
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-            echo "Lambda running correctly."
+            echo "pass=true" >> $GITHUB_OUTPUT 
           else  
-            echo "Lambda not running correctly."
-            # Revert con el hash del ultimo commit
-            git config --global user.name "${{ github.actor }}"
-            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-            git revert $GITHUB_SHA --no-edit
-            git push origin HEAD
-            git checkout develop
-            git pull origin develop
-            git push origin develop
-            hub pull-request -b DEVELOP -m "Revert changes introduced by the pull request"
-            EXIT /B 2
+            echo "pass=false" >> $GITHUB_OUTPUT 
           fi
+      - name: Rolls back to a certain version
+        if: ${{ steps.check.outputs.pass == false}}
+        run: |
+          echo ${{ steps.check.outputs.pass }}
+          git config --global user.name "lblasnar"
+          git revert  ${{ github.sha }}
+          git push
+      - name: Error if fail
+        if: ${{ steps.check.outputs.pass == false}}
+        run: exit 1

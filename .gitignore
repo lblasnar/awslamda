@@ -10,3 +10,4 @@
 /deploy/terraform.tfstate.d/
 /deploy/*.zip
 /*.iml
+.idea/compiler.xml
