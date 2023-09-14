@@ -142,14 +142,17 @@ jobs:
             echo "Lambda not running correctly."
             echo "::set-output name=run::false"
           fi
-      - name: Automatic Commit Revert
-        uses: actions/github-script@v2
+      - name: Get previous commit
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        uses: workflow-get-previous-commit@v1
         with:
-          script: |
-            from revert-merge import revert
-            repo = git.Repo(os.getcwd())
-            commit_sha = "${{ github.event.pull_request.merge_commit_sha }}"
-            repo.git.revert(commit_sha)
+          commit_sha: ${{ github.ref }}
+      - name: Rolls back to a certain version
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        uses: fivebluepetals/rollback-action@v1.0
+        with:
+          branch: ${{ github.branch }}
+          revision: ${{ steps.get-previous-commit.outputs.commit_sha }}
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
