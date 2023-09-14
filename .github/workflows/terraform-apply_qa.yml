@@ -145,8 +145,9 @@ jobs:
       - name: Rolls back to a certain version
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: |
-          git config --global user.name "lblasnar "
+          git config --global user.name "lblasnar"
           git revert  ${{ github.sha }}
+          git push
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
