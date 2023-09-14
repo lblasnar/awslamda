@@ -1,4 +1,5 @@
 import git
+import revert-merge
 
 def revert(commit_sha):
     repo = git.Repo(os.getcwd())
