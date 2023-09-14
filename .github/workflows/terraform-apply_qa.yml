@@ -1,0 +1,153 @@
+name: "Terraform Apply Develop - QA"
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  TF_CLOUD_ORGANIZATION: "lblasnar"
+  TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
+  TF_WORKSPACE: "aws-lambda-lab-gh-actions"
+  CONFIG_DIRECTORY: "./deploy"
+
+jobs:
+  terraform:
+    if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
+    name: "Terraform Apply QA"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots verify
+      - name: Verify jar created
+        run: |
+          FILE=target/LambdaTest-1.0-SNAPSHOT.jar
+          if test -f "$FILE"; 
+          then
+            echo "$FILE exists."
+            cp $FILE deploy
+          else
+            echo "$FILE not exists."
+            EXIT /B 2
+          fi
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run:
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lblasnar_awslamda
+      - name: Upload Configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+        id: apply-upload
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          directory: ${{ env.CONFIG_DIRECTORY }}
+      - name: Create Apply Run
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+        id: apply-run
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+        env:
+          #  https://github.com/hashicorp/tfc-workflows-github/issues/10
+          TF_VAR_environment: "\"QA\""
+          TF_VAR_sqs_name: "\"SQS_QA\""
+          TF_VAR_sqs_delay: 90
+          TF_VAR_sqs_max_message_size: 2048
+          TF_VAR_sqs_message_retention_seconds: 86400
+          TF_VAR_sqs_receive_wait_time_seconds: 10
+          TF_VAR_lambda_runtime: "\"java11\""
+          TF_VAR_lambda_handler: "\"org.example.lambda.HandlerStream\""
+          TF_VAR_lambda_function_name: "\"Lab_lambda_function_QA\""
+          TF_VAR_lambda_filename: "\"LambdaTest-1.0-SNAPSHOT.jar\""
+          TF_VAR_lambda_memory_size: 1024
+          TF_VAR_lambda_timeout: 20
+          TF_VAR_lambda_publish: true
+          TF_VAR_lambda_alias_name: "\"QA\""
+          TF_VAR_lambda_alias_description: "\"QA Environment\""
+          TF_VAR_lambda_alias_version: 9
+          TF_VAR_lambda_event_source_mapping_enabled: true
+          TF_VAR_lambda_allow_invocation_from_sns_statement_id: "\"AllowExecutionFromSNSPR\""
+          TF_VAR_lambda_allow_invocation_from_sns_action: "\"lambda:*\""
+          TF_VAR_lambda_allow_invocation_from_sns_principal: "\"sns.amazonaws.com\""
+          TF_VAR_lambda_role_name: "\"LambdaRole_QA\""
+          TF_VAR_sns_protocol: "\"lambda\""
+          TF_VAR_sns_name: "\"SNS_QA\""
+
+      - name: Apply
+        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
+        if: fromJSON(steps.apply-run.outputs.payload).data.attributes.actions.IsConfirmable
+        id: apply
+        with:
+          run: ${{ steps.apply-run.outputs.run_id }}
+          comment: "Apply Run from GitHub Actions CI ${{ github.sha }}"
+
+  test_lambda:
+    runs-on: ubuntu-latest
+    name: "Test lambda once deploy"
+    needs: [ terraform ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.head_ref }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Configure AWS Region
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-east-1
+      - name: Test Lambda QA
+        run: |
+          echo -n '{"Records": [{"EventSource": "aws:sns","EventVersion": "1.0","EventSubscriptionArn": "arn:aws:sns:us-east-1:{{{accountId}}}:ExampleTopic","Sns": {"Type": "Notification","MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e","TopicArn": "arn:aws:sns:us-east-1:123456789012:ExampleTopic","Subject": "example subject","Message": "{\"id\":\"2662585\",\"description\":\"Test Payload\"}","Timestamp": "1970-01-01T00:00:00.000Z","SignatureVersion": "1","Signature": "EXAMPLE","SigningCertUrl": "EXAMPLE","UnsubscribeUrl": "EXAMPLE","MessageAttributes": {"Test": {"Type": "String","Value": "TestString"},"TestBinary": {"Type": "Binary","Value": "TestBinary"}}}}]}' | base64 > payload.json
+          aws lambda invoke --function-name Lab_lambda_function_QA --payload file://payload.json output.json
+          cat output.json
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: true
+      - name: Check if running correctly
+        run: |
+          if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
+            echo "Lambda running correctly."
+            echo "true"
+          else  
+            echo "Lambda not running correctly."
+            echo "false"
+          fi
+      - name: Rolls back to a certain version
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        run: |
+          git config --global user.name "lblasnar"
+          git revert  ${{ github.sha }}
+          git push
+      - name: Error if fail
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        run: exit 1
