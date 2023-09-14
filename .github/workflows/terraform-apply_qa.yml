@@ -146,7 +146,7 @@ jobs:
         uses: actions/github-script@v2
         with:
           script: |
-            from revert-merge import *
+            from revert-merge import revert
             repo = git.Repo(os.getcwd())
             commit_sha = "${{ github.event.pull_request.merge_commit_sha }}"
             repo.git.revert(commit_sha)
