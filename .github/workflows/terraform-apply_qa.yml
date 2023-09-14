@@ -137,10 +137,10 @@ jobs:
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
             echo "Lambda running correctly."
-            echo "::set-output name=run::true"
+            echo "true"
           else  
             echo "Lambda not running correctly."
-            echo "::set-output name=run::false"
+            echo "false"
           fi
       - name: Rolls back to a certain version
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
