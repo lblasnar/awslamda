@@ -134,18 +134,19 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_EC2_METADATA_DISABLED: true
       - name: Check if running correctly
+        id: check
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-            echo "true"
+            echo "pass=true" >> $GITHUB_OUTPUT 
           else  
-            echo "false"
+            echo "pass=false" >> $GITHUB_OUTPUT 
           fi
-#      - name: Rolls back to a certain version
-#        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-#        run: |
-#          git config --global user.name "lblasnar"
-#          git revert  ${{ github.sha }}
-#          git push
-#      - name: Error if fail
-#        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-#        run: exit 1
+      - name: Rolls back to a certain version
+        if: ${{ steps.check.outputs.pass }}==false
+        run: |
+          git config --global user.name "lblasnar"
+          git revert  ${{ github.sha }}
+          git push
+      - name: Error if fail
+        if: ${{ steps.check.outputs.pass }}==false
+        run: exit 1
