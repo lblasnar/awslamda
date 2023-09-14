@@ -1,7 +1,7 @@
-name: "Terraform Apply Main - Prod"
+name: "Terraform Plan Main - Prod"
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -14,10 +14,11 @@ env:
 jobs:
   terraform:
     if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
-    name: "Terraform Apply Prod"
+    name: "Terraform Plan Prod"
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -57,20 +58,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run:
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lblasnar_awslamda
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=lblasnar_awslamda
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'SonarCloud report here: https://sonarcloud.io/dashboard?id=lblasnar_awslamda&pullRequest=${{env.PR_NUMBER}}'
+            })
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
-        id: apply-upload
+        id: plan-upload
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           directory: ${{ env.CONFIG_DIRECTORY }}
-      - name: Create Apply Run
+          speculative: true
+      - name: Create Plan Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
-        id: apply-run
+        id: plan-run
         with:
           workspace: ${{ env.TF_WORKSPACE }}
-          configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+          configuration_version: ${{ steps.plan-upload.outputs.configuration_version_id }}
+          plan_only: true
         env:
           #  https://github.com/hashicorp/tfc-workflows-github/issues/10
           TF_VAR_environment: "\"Prod\""
@@ -97,63 +112,45 @@ jobs:
           TF_VAR_sns_protocol: "\"lambda\""
           TF_VAR_sns_name: "\"SNS_Prod\""
 
-      - name: Apply
-        uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.0.0
-        if: fromJSON(steps.apply-run.outputs.payload).data.attributes.actions.IsConfirmable
-        id: apply
+      - name: Get Plan Output
+        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
+        id: plan-output
         with:
-          run: ${{ steps.apply-run.outputs.run_id }}
-          comment: "Apply Run from GitHub Actions CI ${{ github.sha }}"
+          plan: ${{ fromJSON(steps.plan-run.outputs.payload).data.relationships.plan.data.id }}
 
-  test_lambda:
-    runs-on: ubuntu-latest
-    name: "Test lambda once deploy"
-    needs: [ terraform ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Update PR
+        uses: actions/github-script@v6
+        id: plan-comment
         with:
-          node-version: '14'
-      - name: Configure AWS Region
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region us-east-1
-      - name: Test Lambda QA
-        run: |
-          echo -n '{"Records": [{"EventSource": "aws:sns","EventVersion": "1.0","EventSubscriptionArn": "arn:aws:sns:us-east-1:{{{accountId}}}:ExampleTopic","Sns": {"Type": "Notification","MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e","TopicArn": "arn:aws:sns:us-east-1:123456789012:ExampleTopic","Subject": "example subject","Message": "{\"id\":\"2662585\",\"description\":\"Test Payload\"}","Timestamp": "1970-01-01T00:00:00.000Z","SignatureVersion": "1","Signature": "EXAMPLE","SigningCertUrl": "EXAMPLE","UnsubscribeUrl": "EXAMPLE","MessageAttributes": {"Test": {"Type": "String","Value": "TestString"},"TestBinary": {"Type": "Binary","Value": "TestBinary"}}}}]}' | base64 > payload.json
-          aws lambda invoke --function-name Lab_lambda_function_Prod --payload file://payload.json output.json
-          cat output.json
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_EC2_METADATA_DISABLED: true
-      - name: Check if running correctly
-        run: |
-          if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-<<<<<<< HEAD
-          echo "Lambda running correctly."
-          echo "true"
-          else  
-          echo "Lambda not running correctly."
-          echo "false"
-=======
-            echo "Lambda running correctly."
-            echo "::set-output name=run::true"
-          else  
-            echo "Lambda not running correctly."
-            echo "::set-output name=run::false"
->>>>>>> parent of ad263f8 (Revert "Revert "Revert "Merge pull request #38 from lblasnar/feature/Rollback-pr-pipeline""")
-          fi
-      - name: Rolls back to a certain version
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        run: |
-          git config --global user.name "lblasnar"
-          git revert  ${{ github.sha }}
-          git push
-      - name: Error if fail
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        run: exit 1
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Cloud Plan Output')
+            });
+            const output = `#### Terraform Cloud Plan Output
+               \`\`\`
+               Plan: ${{ steps.plan-output.outputs.add }} to add, ${{ steps.plan-output.outputs.change }} to change, ${{ steps.plan-output.outputs.destroy }} to destroy.
+               \`\`\`
+               [Terraform Cloud Plan](${{ steps.plan-run.outputs.run_link }})
+               `;
+            // 3. Delete previous comment so PR timeline makes sense
+            if (botComment) {
+              github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+              });
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
 
