@@ -142,9 +142,9 @@ jobs:
             echo "Lambda not running correctly."
             echo "::set-output name=run::false"
           fi
-      - uses: git-revert@v2
-        with:
-          commit-hash: ${{ github.event.before }}
+      - uses: srt32/revert@v0.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
