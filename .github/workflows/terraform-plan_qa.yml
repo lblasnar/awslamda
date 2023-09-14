@@ -140,3 +140,15 @@ jobs:
               repo: context.repo.repo,
               body: output
             });
+      - name: Check if running correctly
+        run: |
+          if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
+          echo "true"
+          else  
+          echo "false"
+          fi
+      - name: Rolls back to a certain version
+        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
+        run: |
+          echo ${{ steps.Check-if-running-correctly.outputs.run }}
+          echo "Working the output!!!"
