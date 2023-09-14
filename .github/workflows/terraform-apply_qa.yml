@@ -149,10 +149,8 @@ jobs:
           git show --oneline ${{ github.ref }}
       - name: Rolls back to a certain version
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        uses: fivebluepetals/rollback-action@v1.0
-        with:
-          branch: ${{ github.branch }}
-          revision: ${{ steps.get-previous-commit.outputs.commit_sha }}
+        run: |
+          git revert ${{ steps.get-previous-commit.outputs.commit_sha }}
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
