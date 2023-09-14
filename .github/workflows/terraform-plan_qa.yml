@@ -10,6 +10,7 @@ env:
   TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
   TF_WORKSPACE: "aws-lambda-lab-gh-actions"
   CONFIG_DIRECTORY: "./deploy"
+  PASSED: "false"
 
 jobs:
   terraform:
@@ -155,14 +156,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_EC2_METADATA_DISABLED: true
       - name: Check if running correctly
+        id: check
         run: |
           if jq -e '. | .StatusCode == 200' output.json >/dev/null; then
-          echo "true"
+          echo "pass=true" >> $GITHUB_OUTPUT 
           else  
-          echo "false"
+          echo "pass=true" >> $GITHUB_OUTPUT 
           fi
       - name: Rolls back to a certain version
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==true
+        if: ${{ steps.check.outputs.pass }}==true
         run: |
-          echo ${{ steps.Check-if-running-correctly.outputs.result }}
+          echo ${{ steps.check.outputs.pass }}
           echo "Working the output!!!"
