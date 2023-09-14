@@ -143,10 +143,13 @@ jobs:
             echo "::set-output name=run::false"
           fi
       - name: Automatic Commit Revert
-        uses: 'tofu-apis/revert-commit-action@v0.0.37'
+        uses: actions/github-script@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          is-push-enabled: 'true'
+          script: |
+            import git
+            repo = git.Repo(os.getcwd())
+            commit_sha = "${{ github.event.pull_request.merge_commit_sha }}"
+            repo.git.revert(commit_sha)
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
