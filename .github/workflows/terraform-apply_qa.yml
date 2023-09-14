@@ -142,9 +142,11 @@ jobs:
             echo "Lambda not running correctly."
             echo "::set-output name=run::false"
           fi
-      - uses: srt32/revert@v0.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Automatic Commit Revert
+        uses: 'tofu-apis/revert-commit-action@v0.0.37'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          is-push-enabled: 'true'
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
