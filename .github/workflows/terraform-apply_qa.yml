@@ -142,15 +142,10 @@ jobs:
             echo "Lambda not running correctly."
             echo "::set-output name=run::false"
           fi
-      - name: Get previous commit
-        if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
-        run: |
-          git config --global --add safe.directory /github/workspace
-          git show --oneline ${{ github.ref }}
       - name: Rolls back to a certain version
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: |
-          git revert ${{ steps.get-previous-commit.outputs.commit_sha }}
+          git revert  ${{ github.sha }}
       - name: Error if fail
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: exit 1
