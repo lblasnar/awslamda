@@ -145,6 +145,7 @@ jobs:
       - name: Get previous commit
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
         run: |
+          git config --global --add safe.directory /github/workspace
           git show --oneline ${{ github.ref }}
       - name: Rolls back to a certain version
         if: ${{ steps.Check-if-running-correctly.outputs.run }}==false
