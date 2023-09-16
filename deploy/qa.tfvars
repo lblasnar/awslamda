@@ -28,5 +28,5 @@ sns_name                                      = "SNS_QA"
 #CloudWatch
 cloudwatch_alarm_period                       = 60
 cloudwatch_alarm_evaluation_periods           = 3
-cloudwatch_alarm_threshold                    = 0.4
+cloudwatch_alarm_threshold                    = 4
 alarm_email                                   = "luis.blas.narvaez@gmail.com"
