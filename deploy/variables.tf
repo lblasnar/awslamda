@@ -17,12 +17,6 @@ variable "sqs_name" {
   default     = "SQS"
 }
 
-variable "lambda_role_name" {
-  type        = string
-  description = "The lambda role name"
-  default     = "LambdaRole"
-}
-
 variable "sqs_delay" {
   type        = number
   description = "The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0 to 900 (15 minutes). The default for this attribute is 0 seconds."
@@ -88,6 +82,17 @@ variable "lambda_filename" {
   default     = "../target/LambdaTest-1.0-SNAPSHOT.jar"
 }
 
+variable "lambda_role_name" {
+  type        = string
+  description = "The lambda role name"
+  default     = "LambdaRole"
+}
+
+variable "lambda_max_concurrency" {
+  type        = number
+  description = "Maximum concurrency of lambda"
+  default     = 10
+}
 variable "lambda_function_name" {
   type        = string
   description = "The lambda function name"
@@ -164,3 +169,21 @@ variable "lambda_allow_invocation_from_sns_principal" {
   default = "sns.amazonaws.com"
 }
 
+########################################################################################################################
+# CLOUDWATCH
+########################################################################################################################
+variable "cloudwatch_alarm_period" {
+  type        = number
+  description = "Period to check the alarm in seconds"
+  default     = 60
+}
+variable "cloudwatch_alarm_evaluation_periods" {
+  type        = number
+  description = "The number of periods over which data is compared to the specified threshold."
+  default     = 3
+}
+variable "cloudwatch_alarm_threshold" {
+  type        = number
+  description = "The value against which the specified statistic is compared. This parameter is required for alarms based on static thresholds, but should not be used for alarms based on anomaly detection models."
+  default     = 0.8
+}

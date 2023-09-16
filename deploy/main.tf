@@ -80,6 +80,13 @@ resource "aws_lambda_function" "lambda_function" {
     mode = "Active"
   }
 }
+
+resource "aws_lambda_provisioned_concurrency_config" "my_function_provisioned_concurrency" {
+  function_name                     = var.lambda_function_name
+  provisioned_concurrent_executions = var.lambda_max_concurrency
+  qualifier                         = aws_lambda_alias.lambda_alias.name
+}
+
 resource "aws_iam_role" "my_aws_role" {
   name               = var.lambda_role_name
   assume_role_policy = <<EOF
@@ -250,4 +257,37 @@ resource "aws_lambda_alias" "lambda_alias" {
   description      = var.lambda_alias_description
   function_name    = aws_lambda_function.lambda_function.function_name
   function_version = var.lambda_alias_version
+}
+########################################################################################################################
+# CLOUDWATCH
+########################################################################################################################
+resource "aws_cloudwatch_metric_alarm" "emailAlarm" {
+  alarm_name          = "lambda-failure-alarm"
+  alarm_description   = "This alarm alerts when a Lambda function fails consecutively."
+  metric_name         = "LambdaFailedInvocations"
+  namespace           = "AWS/Lambda"
+  period              = var.cloudwatch_alarm_period
+  evaluation_periods  = var.cloudwatch_alarm_evaluation_periods
+  threshold           = 0.4
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  alarm_actions       = [
+    aws_cloudwatch_event_rule.emailRule.arn
+  ]
+}
+resource "aws_cloudwatch_event_rule" "emailRule" {
+  name          = "EmailRule"
+  description   = "This rule sends an email when the Lambda failure alarm is triggered."
+  event_pattern = jsonencode(
+    {
+      "source" : ["aws.cloudwatch"],
+      "detail-type" : ["AWS CloudWatch Alarm Notification"],
+      "detail" : {
+        "alarmName" : ["my-lambda-failure-alarm"]
+      }
+    })
+}
+
+resource "aws_cloudwatch_event_target" "emailTarget" {
+  rule = aws_cloudwatch_event_rule.emailRule.name
+  arn  = aws_lambda_alias.lambda_alias.arn
 }
