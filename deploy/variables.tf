@@ -175,12 +175,12 @@ variable "lambda_allow_invocation_from_sns_principal" {
 variable "cloudwatch_alarm_period" {
   type        = number
   description = "Period to check the alarm in seconds"
-  default     = 20
+  default     = 60
 }
 variable "cloudwatch_alarm_evaluation_periods" {
   type        = number
   description = "The number of periods over which data is compared to the specified threshold."
-  default     = 3
+  default     = 1
 }
 variable "cloudwatch_alarm_threshold" {
   type        = number
