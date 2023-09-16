@@ -190,4 +190,5 @@ variable "cloudwatch_alarm_threshold" {
 variable "alarm_email" {
   type        = string
   description = "email to send alarm"
+  default     = "luis.blas.narvaez@gmail.com"
 }
