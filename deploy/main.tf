@@ -64,23 +64,6 @@ data "aws_iam_policy_document" "sns_topic_policy" {
   }
 }
 
-resource "aws_iam_policy" "eventbridge_policy" {
-  name   = "cloudwatch-eventbridge-policy"
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "events:PutRule"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
 # Lambda
 resource "aws_lambda_function" "lambda_function" {
   filename         = var.lambda_filename
@@ -279,16 +262,29 @@ resource "aws_lambda_alias" "lambda_alias" {
 ########################################################################################################################
 # CLOUDWATCH
 ########################################################################################################################
-resource "aws_cloudwatch_metric_alarm" "emailAlarm" {
+resource "aws_cloudwatch_metric_alarm" "emailAlarmErrors" {
   alarm_name          = "lambda-failure-alarm"
   alarm_description   = "This alarm alerts when a Lambda function fails consecutively."
-  metric_name         = "LambdaFailedInvocations"
+  metric_name         = "Errors"
   namespace           = "AWS/Lambda"
   period              = var.cloudwatch_alarm_period
   evaluation_periods  = var.cloudwatch_alarm_evaluation_periods
   threshold           = var.cloudwatch_alarm_threshold
   statistic           = "SampleCount"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
+  comparison_operator = "GreaterThanThreshold"
+  actions_enabled     = "true"
+  alarm_actions       = [aws_sns_topic.alarm_topic.arn]
+}
+resource "aws_cloudwatch_metric_alarm" "emailAlarmConcurrentExec" {
+  alarm_name          = "lambda-concurrent-execution-alarm"
+  alarm_description   = "This alarm alerts when a Lambda function has more than a threshold concurrent executions."
+  metric_name         = "Concurrent executions"
+  namespace           = "AWS/Lambda"
+  period              = var.cloudwatch_alarm_period
+  evaluation_periods  = var.cloudwatch_alarm_evaluation_periods
+  threshold           = var.cloudwatch_alarm_threshold_concurrent_execution
+  statistic           = "SampleCount"
+  comparison_operator = "GreaterThanThreshold"
   actions_enabled     = "true"
   alarm_actions       = [aws_sns_topic.alarm_topic.arn]
 }
