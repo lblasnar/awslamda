@@ -64,6 +64,23 @@ data "aws_iam_policy_document" "sns_topic_policy" {
   }
 }
 
+resource "aws_iam_policy" "eventbridge_policy" {
+  name   = "cloudwatch-eventbridge-policy"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "events:PutRule"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
 # Lambda
 resource "aws_lambda_function" "lambda_function" {
   filename         = var.lambda_filename
