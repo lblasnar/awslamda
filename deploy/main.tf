@@ -144,7 +144,8 @@ resource "aws_iam_role_policy" "lambda_role_cloudwatch_policy" {
                   "iam:GetPolicy",
                   "iam:GetPolicyVersion",
                   "iam:GetRole",
-                  "oam:ListSinks"
+                  "oam:ListSinks",
+                  "events:*"
               ],
               "Resource": "*"
           },
