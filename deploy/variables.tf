@@ -187,3 +187,8 @@ variable "cloudwatch_alarm_threshold" {
   description = "The value against which the specified statistic is compared. This parameter is required for alarms based on static thresholds, but should not be used for alarms based on anomaly detection models."
   default     = 0.8
 }
+variable "alarm_email" {
+  type        = string
+  description = "email to send alarm"
+  default     = "luis.blas.narvaez@gmail.com"
+}
