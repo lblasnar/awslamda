@@ -301,7 +301,25 @@ resource "aws_sns_topic_policy" "alarm_sns_policy" {
   arn    = aws_sns_topic.alarm_topic.arn
   policy = data.aws_iam_policy_document.sns_topic_policy.json
 }
+
 resource "aws_iam_role_policy_attachment" "cloudwatch_alarms_role_policy_attachment" {
   role = aws_iam_role.cloudwatch_alarms_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAlarmSNSAccess"
+}
+resource "aws_iam_role" "cloudwatch_alarms_role" {
+  name = "cloudwatch_alarms_role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudwatch.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
 }
