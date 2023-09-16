@@ -278,7 +278,7 @@ resource "aws_cloudwatch_metric_alarm" "emailAlarmErrors" {
 resource "aws_cloudwatch_metric_alarm" "emailAlarmConcurrentExec" {
   alarm_name          = "lambda-concurrent-execution-alarm"
   alarm_description   = "This alarm alerts when a Lambda function has more than a threshold concurrent executions."
-  metric_name         = "Concurrent executions"
+  metric_name         = "ConcurrentExecutions"
   namespace           = "AWS/Lambda"
   period              = var.cloudwatch_alarm_period
   evaluation_periods  = var.cloudwatch_alarm_evaluation_periods
