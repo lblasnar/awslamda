@@ -287,13 +287,14 @@ resource "aws_cloudwatch_metric_alarm" "emailAlarm" {
   period              = var.cloudwatch_alarm_period
   evaluation_periods  = var.cloudwatch_alarm_evaluation_periods
   threshold           = var.cloudwatch_alarm_threshold
+  statistic           = "SampleCount"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   actions_enabled     = "true"
   alarm_actions       = [aws_sns_topic.alarm_topic.arn]
 }
 # SNS topic to send emails with the Alerts
 resource "aws_sns_topic" "alarm_topic" {
-  name              = "my-alarm-topic"
+  name = "alarm-topic"
 
   ## This local exec, suscribes your email to the topic
   provisioner "local-exec" {
