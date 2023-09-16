@@ -98,11 +98,11 @@ resource "aws_lambda_function" "lambda_function" {
   }
 }
 
-resource "aws_lambda_provisioned_concurrency_config" "my_function_provisioned_concurrency" {
-  function_name                     = var.lambda_function_name
-  provisioned_concurrent_executions = var.lambda_max_concurrency
-  qualifier                         = aws_lambda_alias.lambda_alias.name
-}
+#resource "aws_lambda_provisioned_concurrency_config" "my_function_provisioned_concurrency" {
+#  function_name                     = var.lambda_function_name
+#  provisioned_concurrent_executions = var.lambda_max_concurrency
+#  qualifier                         = aws_lambda_alias.lambda_alias.name
+#}
 
 resource "aws_iam_role" "my_aws_role" {
   name               = var.lambda_role_name
@@ -286,26 +286,21 @@ resource "aws_cloudwatch_metric_alarm" "emailAlarm" {
   namespace           = "AWS/Lambda"
   period              = var.cloudwatch_alarm_period
   evaluation_periods  = var.cloudwatch_alarm_evaluation_periods
-  threshold           = 0.4
+  threshold           = var.cloudwatch_alarm_threshold
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  alarm_actions       = [
-    aws_cloudwatch_event_rule.emailRule.arn
-  ]
+  actions_enabled     = "true"
+  alarm_actions       = [aws_sns_topic.alarm_topic.arn]
 }
-resource "aws_cloudwatch_event_rule" "emailRule" {
-  name          = "EmailRule"
-  description   = "This rule sends an email when the Lambda failure alarm is triggered."
-  event_pattern = jsonencode(
-    {
-      "source" : ["aws.cloudwatch"],
-      "detail-type" : ["AWS CloudWatch Alarm Notification"],
-      "detail" : {
-        "alarmName" : ["my-lambda-failure-alarm"]
-      }
-    })
-}
+# SNS topic to send emails with the Alerts
+resource "aws_sns_topic" "alarm_topic" {
+  name              = "my-alarm-topic"
 
-resource "aws_cloudwatch_event_target" "emailTarget" {
-  rule = aws_cloudwatch_event_rule.emailRule.name
-  arn  = aws_lambda_alias.lambda_alias.arn
+  ## This local exec, suscribes your email to the topic
+  provisioner "local-exec" {
+    command = "aws sns subscribe --topic-arn ${self.arn} --protocol email --notification-endpoint ${var.alarm_email} --region us-east-1"
+  }
+}
+resource "aws_sns_topic_policy" "alarm_sns_policy" {
+  arn    = aws_sns_topic.alarm_topic.arn
+  policy = data.aws_iam_policy_document.sns_topic_policy.json
 }
