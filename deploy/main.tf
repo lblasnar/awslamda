@@ -304,7 +304,7 @@ resource "aws_sns_topic_policy" "alarm_sns_policy" {
 
 resource "aws_iam_role_policy_attachment" "cloudwatch_alarms_role_policy_attachment" {
   role = aws_iam_role.cloudwatch_alarms_role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAlarmSNSAccess"
+  policy_arn = aws_iam_role.cloudwatch_alarms_role.arn
 }
 resource "aws_iam_role" "cloudwatch_alarms_role" {
   name = "cloudwatch_alarms_role"
