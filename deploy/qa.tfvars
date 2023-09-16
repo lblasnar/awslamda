@@ -21,7 +21,7 @@ lambda_allow_invocation_from_sns_statement_id = "AllowExecutionFromSNSPR"
 lambda_allow_invocation_from_sns_action       = "lambda:*"
 lambda_allow_invocation_from_sns_principal    = "sns.amazonaws.com"
 lambda_role_name                              = "LambdaRole_QA"
-lambda_max_concurrency                        = 10
+lambda_max_concurrency                        = 12
 #SNS
 sns_protocol                                  = "lambda"
 sns_name                                      = "SNS_QA"
