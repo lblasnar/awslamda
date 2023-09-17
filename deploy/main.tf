@@ -330,7 +330,7 @@ resource "aws_iam_role_policy" "cloudwatch_alarms_role_policy" {
     {
       "Effect": "Allow",
       "Action": "sns:Publish",
-      "Resource": "aws_sns_topic.alarm_topic.arn"
+      "Resource": "${aws_sns_topic.alarm_topic.arn}"
     }
   ]
 }
