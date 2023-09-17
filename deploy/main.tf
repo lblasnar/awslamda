@@ -329,6 +329,11 @@ resource "aws_iam_role_policy" "cloudwatch_alarms_role_policy" {
   "Statement": [
     {
       "Effect": "Allow",
+      "Principal": {
+        "Service": [
+          "cloudwatch.amazonaws.com"
+        ]
+      },
       "Action": "sns:Publish",
       "Resource": "${aws_sns_topic.alarm_topic.arn}"
     }
