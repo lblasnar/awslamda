@@ -60,9 +60,7 @@ data "aws_iam_policy_document" "sns_topic_policy" {
       identifiers = ["*"]
     }
     resources = [
-      aws_sns_topic.my_terraform_sns_topic.arn,
-      aws_cloudwatch_metric_alarm.emailAlarmConcurrentExec.arn,
-      aws_cloudwatch_metric_alarm.emailAlarmErrors.arn
+      aws_sns_topic.my_terraform_sns_topic.arn
     ]
   }
 }
@@ -302,7 +300,7 @@ resource "aws_sns_topic" "alarm_topic" {
 }
 resource "aws_sns_topic_policy" "alarm_sns_policy" {
   arn    = aws_sns_topic.alarm_topic.arn
-  policy = data.aws_iam_policy_document.sns_topic_policy.json
+  policy = data.aws_iam_policy_document.sns_alarm_topic_policy.json
 }
 
 resource "aws_iam_role" "cloudwatch_alarms_role" {
@@ -338,4 +336,21 @@ resource "aws_iam_role_policy" "cloudwatch_alarms_role_policy" {
   ]
 }
 EOF
+}
+data "aws_iam_policy_document" "sns_alarm_topic_policy" {
+  statement {
+    actions = [
+      "SNS:Subscribe",
+      "SNS:Receive",
+      "SNS:Publish"
+    ]
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    resources = [
+      aws_sns_topic.alarm_topic.arn
+    ]
+  }
 }
