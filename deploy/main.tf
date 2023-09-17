@@ -51,7 +51,8 @@ data "aws_iam_policy_document" "sns_topic_policy" {
   statement {
     actions = [
       "SNS:Subscribe",
-      "SNS:Receive"
+      "SNS:Receive",
+      "SNS:Publish"
     ]
     effect = "Allow"
     principals {
@@ -329,11 +330,6 @@ resource "aws_iam_role_policy" "cloudwatch_alarms_role_policy" {
   "Statement": [
     {
       "Effect": "Allow",
-      "Principal": {
-        "Service": [
-          "cloudwatch.amazonaws.com"
-        ]
-      },
       "Action": "sns:Publish",
       "Resource": "${aws_sns_topic.alarm_topic.arn}"
     }
