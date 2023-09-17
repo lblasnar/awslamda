@@ -301,3 +301,38 @@ resource "aws_sns_topic_policy" "alarm_sns_policy" {
   arn    = aws_sns_topic.alarm_topic.arn
   policy = data.aws_iam_policy_document.sns_topic_policy.json
 }
+
+resource "aws_iam_role" "cloudwatch_alarms_role" {
+  name               = "cloudwatch_alarms_role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "events.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "cloudwatch_alarms_role_policy" {
+  name   = "cloudwatch_alarms_role_policy"
+  role   = aws_iam_role.cloudwatch_alarms_role.name
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sns:Publish",
+      "Resource": aws_sns_topic.alarm_topic.arn
+    }
+  ]
+}
+EOF
+}
