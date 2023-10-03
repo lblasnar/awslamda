@@ -264,7 +264,7 @@ resource "aws_lambda_alias" "lambda_alias" {
 # CLOUDWATCH
 ########################################################################################################################
 resource "aws_cloudwatch_metric_alarm" "emailAlarmErrors" {
-  alarm_name          = "lambda-failure-alarm"
+  alarm_name          = "lambda-failure-alarm-${var.environment}"
   alarm_description   = "This alarm alerts when a Lambda function fails consecutively."
   metric_name         = "Errors"
   namespace           = "AWS/Lambda"
@@ -277,7 +277,7 @@ resource "aws_cloudwatch_metric_alarm" "emailAlarmErrors" {
   alarm_actions       = [aws_sns_topic.alarm_topic.arn]
 }
 resource "aws_cloudwatch_metric_alarm" "emailAlarmConcurrentExec" {
-  alarm_name          = "lambda-concurrent-execution-alarm"
+  alarm_name          = "lambda-concurrent-execution-alarm-${var.environment}"
   alarm_description   = "This alarm alerts when a Lambda function has more than a threshold concurrent executions."
   metric_name         = "ConcurrentExecutions"
   namespace           = "AWS/Lambda"
